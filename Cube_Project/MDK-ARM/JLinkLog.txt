@@ -1,0 +1,44 @@
+T0A3C 662:785 SEGGER J-Link V6.40 Log File (0000ms, 35203ms total)
+T0A3C 662:785 DLL Compiled: Oct 26 2018 15:06:02 (0000ms, 35203ms total)
+T0A3C 662:785 Logging started @ 2019-07-06 00:07 (0000ms, 35203ms total)
+T0A3C 662:785 JLINK_SetWarnOutHandler(...) (0000ms, 35203ms total)
+T0A3C 662:785 JLINK_OpenEx(...)
+Firmware: J-Link V9 compiled Oct 25 2018 11:46:07
+Hardware: V9.20
+S/N: 19970412
+Feature(s): GDB, RDI, FlashBP, FlashDL, JFlash, RDDI
+TELNET listener socket opened on port 19021WEBSRV 
+Starting webserver (0024ms, 35227ms total)
+T0A3C 662:785 WEBSRV Webserver running on local port 19080 (0025ms, 35228ms total)
+T0A3C 662:785   returns O.K. (0025ms, 35228ms total)
+T0A3C 662:810 JLINK_GetEmuCaps()  returns 0xB9FF7BBF (0000ms, 35228ms total)
+T0A3C 662:810 JLINK_TIF_GetAvailable(...) (0000ms, 35228ms total)
+T0A3C 662:810 JLINK_SetErrorOutHandler(...) (0000ms, 35228ms total)
+T0A3C 662:810 JLINK_ExecCommand("ProjectFile = "E:\GitHub\Vsf_For_C8t6\Cube_Project\MDK-ARM\JLinkSettings.ini"", ...).   returns 0x00 (0004ms, 35232ms total)
+T0A3C 662:814 JLINK_ExecCommand("Device = STM32F103C8", ...). Device "STM32F103C8" selected.  returns 0x00 (0003ms, 35235ms total)
+T0A3C 662:817 JLINK_ExecCommand("DisableConnectionTimeout", ...).   returns 0x01 (0000ms, 35235ms total)
+T0A3C 662:817 JLINK_GetHardwareVersion()  returns 0x16760 (0000ms, 35235ms total)
+T0A3C 662:817 JLINK_GetDLLVersion()  returns 64000 (0000ms, 35235ms total)
+T0A3C 662:817 JLINK_GetFirmwareString(...) (0000ms, 35235ms total)
+T0A3C 662:817 JLINK_GetDLLVersion()  returns 64000 (0000ms, 35235ms total)
+T0A3C 662:817 JLINK_GetCompileDateTime() (0000ms, 35235ms total)
+T0A3C 662:817 JLINK_GetFirmwareString(...) (0000ms, 35235ms total)
+T0A3C 662:817 JLINK_GetHardwareVersion()  returns 0x16760 (0000ms, 35235ms total)
+T0A3C 662:817 JLINK_TIF_Select(JLINKARM_TIF_SWD)  returns 0x00 (0001ms, 35236ms total)
+T0A3C 662:818 JLINK_SetSpeed(10000) (0001ms, 35237ms total)
+T0A3C 662:820 JLINK_SetResetType(JLINKARM_RESET_TYPE_NORMAL)  returns JLINKARM_RESET_TYPE_NORMAL (0000ms, 35237ms total)
+T0A3C 662:820 JLINK_Reset() >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF>STM32 (connect): Can not attach to CPU. Trying connect under reset. >0x10B TIF> >0x10F TIF>
+ >0x10B TIF> >0x10F TIF>
+  ***** Error: STM32: Connecting to CPU via connect under reset failed. >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF>STM32 (connect): Can not attach to CPU. Trying connect under reset. >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF>
+  ***** Error: STM32: Connecting to CPU via connect under reset failed.JLINK_GetId() >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF>STM32 (connect): Can not attach to CPU. Trying connect under reset. >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF>
+
+  ***** Error: STM32: Connecting to CPU via connect under reset failed. >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF>STM32 (connect): Can not attach to CPU. Trying connect under reset. >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF>
+  ***** Error: STM32: Connecting to CPU via connect under reset failed.  returns 0x00000000 (0695ms, 37359ms total)
+T0A3C 664:943 JLINK_GetId() >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF>STM32 (connect): Can not attach to CPU. Trying connect under reset. >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF>
+  ***** Error: STM32: Connecting to CPU via connect under reset failed. >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF>STM32 (connect): Can not attach to CPU. Trying connect under reset. >0x10B TIF> >0x10F TIF> >0x10B TIF> >0x10F TIF>
+  ***** Error: STM32: Connecting to CPU via connect under reset failed.
+  returns 0x00000000 (0696ms, 38055ms total)
+T0A3C 665:647 JLINK_GetFirmwareString(...) (0000ms, 38055ms total)
+T0A3C 668:338 JLINK_Close() (0013ms, 38068ms total)
+T0A3C 668:338  (0013ms, 38068ms total)
+T0A3C 668:338 Closed (0013ms, 38068ms total)
