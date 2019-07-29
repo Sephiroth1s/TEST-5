@@ -24,16 +24,16 @@ typedef struct {
 } print_str_cfg_t;
 
 #define PRINT_STR_POOL_ITEM_SIZE sizeof(print_str_t)
-#define PRINT_STR_POOL_ITEM_COUNT 8
+#define PRINT_STR_POOL_ITEM_COUNT 2
 
 typedef struct print_str_pool_item_t print_str_pool_item_t;
 struct print_str_pool_item_t {
-    bool bIsFree;
     uint8_t chBuffer[PRINT_STR_POOL_ITEM_SIZE];
+    bool bIsFree;
 };
 
-print_str_pool_item_t *print_str_pool_allocate(void);
-void print_str_pool_free(print_str_pool_item_t *ptItem);
+print_str_t *print_str_pool_allocate(void);
+void print_str_pool_free(print_str_t *ptItem);
 extern void print_str_pool_item_init(void);
 
 extern fsm_rt_t print_string(print_str_t *ptThis);

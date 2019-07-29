@@ -1,7 +1,6 @@
 
 #include "app_cfg.h"
-#include "check_string.h"
-#include "../utilities/arm/app_type.h"
+#include "../check_string/check_string.h"
 #include <stdbool.h>
 #include <stdint.h>
 #define this (*ptThis)

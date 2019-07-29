@@ -66,11 +66,11 @@ dkms.conf
 *.axf
 *.dep
 *.scvd
+*.iex
 *.uvguix.*
+Cube_Project/MDK-ARM/DebugConfig/*
 build/mdk/fsm/
 build/mdk/DebugConfig/
-*.uvoptx
-*.uvprojx
 RTE_Components.h
 # Visio
 *.vsd

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "../queue/queue.h"
+#include "../uart/uart.h"
 #define this (*ptThis)
 
 #define TASK_STR_RESET_FSM()  \
@@ -28,7 +29,10 @@ bool print_string_init(print_str_t *ptThis, const print_str_cfg_t *ptCFG)
     enum {
         START
     };
-    if ((NULL == ptThis) || (NULL == ptCFG) || (NULL == ptCFG->fnPrintByte)) {
+    if (   (NULL == ptCFG) 
+        || (NULL == ptThis) 
+        || (NULL == ptCFG->pTarget)
+        || (NULL == ptCFG->fnPrintByte)) {
         return false;
     }
     this.chState = START;
@@ -47,41 +51,24 @@ fsm_rt_t print_string(print_str_t *ptThis)
         PRINT_CHECK,
         PRINT_STR
     };
-    // if (NULL == ptThis || (this.fnPrintByte == NULL) || (NULL == this.pTarget)) {
-    if (NULL == ptThis) {
+    if (NULL == ptThis || (this.fnPrintByte == NULL) || (NULL == this.pTarget)) {
         return fsm_rt_err;
     }
-    // if (NULL == this.fnPrintByte) {
-    //     while(!serial_out('-'));
-    //     return fsm_rt_err;
-    // }
-    // if (NULL == this.pTarget) {
-    //     while(!serial_out('='));
-    //     return fsm_rt_err;
-    // }
-    //未知bug:有上两行检测则工作正常，下方不能添加串口输出否则依旧无法正常工作
-    // while(!serial_out('A'));
     switch (this.chState) {
         case START:
-            // while(!serial_out('1'));
             this.chState = PRINT_CHECK;
             // break;
         case PRINT_CHECK:
-            // while(!serial_out('2'));
             if ('\0' == *this.pchString) {
-                while(!serial_out('3'));
                 TASK_STR_RESET_FSM();
                 return fsm_rt_cpl;
             } else {
-                // while(!serial_out('4'));
                 this.chState = PRINT_STR;
             }
             // break;
         case PRINT_STR:
-            // while(!serial_out('5'));
             #ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
             if (PRINT_STR_OUTPUT_BYTE(this.pTarget, *this.pchString)) {
-                while(!serial_out('6'));
                 this.pchString++;
                 this.chState = PRINT_CHECK;
             }
@@ -102,37 +89,38 @@ fsm_rt_t print_string(print_str_t *ptThis)
 void print_str_pool_item_init(void)
 {
     uint8_t chAllocateCounter = 0;
-    while (chAllocateCounter < PRINT_STR_POOL_ITEM_COUNT) {
+    while (chAllocateCounter < UBOUND(s_tPrintStringPool)) {
         s_tPrintStringPool[chAllocateCounter].bIsFree = true;
         chAllocateCounter++;
     }
 }
 
-print_str_pool_item_t *print_str_pool_allocate(void)
+print_str_t *print_str_pool_allocate(void)
 {
     static uint8_t s_chAllocateIndex = 0;
     if (!s_chAllocateLength) {
         return NULL;
     }
-    while (s_chAllocateIndex < PRINT_STR_POOL_ITEM_COUNT) {
-        if (s_tPrintStringPool[s_chAllocateIndex].bIsFree) {
-            s_tPrintStringPool[s_chAllocateIndex].bIsFree = false;
-            s_chAllocateLength--;
-            return &s_tPrintStringPool[s_chAllocateIndex];
-        }
-        s_chAllocateIndex++;
-        if (s_chAllocateIndex >= PRINT_STR_POOL_ITEM_COUNT) {
-            s_chAllocateIndex = 0;
-        }
+    if (s_tPrintStringPool[s_chAllocateIndex].bIsFree) {
+        s_tPrintStringPool[s_chAllocateIndex].bIsFree = false;
+        s_chAllocateLength--;
+        return (print_str_t *)(s_tPrintStringPool[s_chAllocateIndex].chBuffer);
+    }
+    s_chAllocateIndex++;
+    if (s_chAllocateIndex >= UBOUND(s_tPrintStringPool)) {
+        s_chAllocateIndex = 0;
     }
     return NULL;
 }
 
-void print_str_pool_free(print_str_pool_item_t *ptItem)
+void print_str_pool_free(print_str_t *ptItem)
 {
-    if (!(ptItem->bIsFree)&&(ptItem != NULL)) {
-        ptItem->bIsFree = true;
-        memset(ptItem->chBuffer, 0, PRINT_STR_POOL_ITEM_SIZE);
+    print_str_pool_item_t *ptThis=(print_str_pool_item_t *)ptItem;
+    if (   (ptItem != NULL)
+        && (!this.bIsFree)  
+        && (ptThis >= &s_tPrintStringPool[0]) 
+        && (ptThis <= &s_tPrintStringPool[UBOUND(s_tPrintStringPool)-1])) {
+        this.bIsFree = true;
         s_chAllocateLength++;
     }
 }
