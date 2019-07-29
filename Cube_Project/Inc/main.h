@@ -31,6 +31,14 @@ extern "C" {
 #include "stm32f1xx_hal.h"
 #include "../User_App/system_clock_cfg.h"
 #include "../User_App/gpio_init.h"
+#include "../User_App/led/led.h"
+#include "../User_App/uart/uart.h"
+#include "../User_App/event/event.h"
+#include "../User_App/critical_sector/critical_sector.h"
+#include "../User_App/queue/queue.h"
+#include "../User_App/check_string/check_string.h"
+#include "../User_App/print_string/print_string.h"
+#include "../User_App/check_use_peek/check_use_peek.h"
 
 #ifdef __cplusplus
 }

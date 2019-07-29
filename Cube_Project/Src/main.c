@@ -2,7 +2,7 @@
 #include "vsf.h"
 #include "main.h"
 #include <stdio.h>
-#include "../User_App/platform.h"
+#include "main.h"
 #include "../User_App/queue/queue.h"
 #include "../User_App/led/led.h"
 
@@ -77,11 +77,11 @@ static void system_init(void)
 /*================================= MAIN =====================================*/
 int main(void)
 {
-    static const check_agent_t c_tCheckWordsAgent[] = {
+    static check_agent_t c_tCheckWordsAgent[] = {
                                 {&s_tCheckHelloPCB, check_hello},
                                 {&s_tCheckApplePCB, check_apple},
                                 {&s_tCheckOrangePCB, check_orange}};
-    static const check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
+    static check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
                                         UBOUND(c_tCheckWordsAgent),
                                         &s_tFIFOin,
                                         (check_agent_t *)c_tCheckWordsAgent};
