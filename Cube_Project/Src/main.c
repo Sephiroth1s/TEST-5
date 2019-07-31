@@ -77,11 +77,11 @@ static void system_init(void)
 /*================================= MAIN =====================================*/
 int main(void)
 {
-    static check_agent_t c_tCheckWordsAgent[] = {
+    static const check_agent_t c_tCheckWordsAgent[] = {
                                 {&s_tCheckHelloPCB, check_hello},
                                 {&s_tCheckApplePCB, check_apple},
                                 {&s_tCheckOrangePCB, check_orange}};
-    static check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
+    static const check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
                                         UBOUND(c_tCheckWordsAgent),
                                         &s_tFIFOin,
                                         (check_agent_t *)c_tCheckWordsAgent};

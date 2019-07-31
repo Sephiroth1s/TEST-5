@@ -30,7 +30,7 @@ typedef struct print_str_pool_item_t print_str_pool_item_t;
 struct print_str_pool_item_t {
     uint8_t chBuffer[PRINT_STR_POOL_ITEM_SIZE];
     bool bIsFree;
-};
+} ALIGN(__alignof__(print_str_t));
 
 print_str_t *print_str_pool_allocate(void);
 void print_str_pool_free(print_str_t *ptItem);
