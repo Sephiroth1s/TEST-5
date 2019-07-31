@@ -39,7 +39,7 @@ typedef struct {
 } check_apple_pcb_t;
 
 static event_t s_tPrintWorld, s_tPrintApple, s_tPrintOrange;
-static uint8_t s_chBytein[INPUT_FIFO_SIZE],s_chByteout[OUTPUT_FIFO_SIZE];
+static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE];
 static byte_queue_t s_tFIFOin, s_tFIFOout;
 static check_hello_pcb_t s_tCheckHelloPCB;
 static check_apple_pcb_t s_tCheckApplePCB;
@@ -53,9 +53,9 @@ static fsm_rt_t task_world(void);
 static fsm_rt_t task_apple(void);
 static fsm_rt_t task_orange(void);
 
-static fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte,  bool *pbRequestDrop);
-static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte,  bool *pbRequestDrop);
-static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte,  bool *pbRequestDrop);
+static fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
+static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
+static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
@@ -71,7 +71,6 @@ static void system_init(void)
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     vsf_stdio_init();
-
 }
 
 /*================================= MAIN =====================================*/
@@ -105,7 +104,6 @@ int main(void)
         serial_out_task();
     }
 }
-
 
 static fsm_rt_t task_print_world(void)
 {
@@ -278,7 +276,7 @@ static fsm_rt_t task_print_orange(void)
 
 static fsm_rt_t task_orange(void)
 {
-    static print_str_t* s_ptPrintString;
+    static print_str_t *s_ptPrintString;
     static enum {
         START,
         INIT,
