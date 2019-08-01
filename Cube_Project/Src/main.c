@@ -23,39 +23,36 @@
 #define FN_DEQUEUE_BYTE (&dequeue_byte)
 #define FN_PEEK_BYTE_QUEUE (&peek_byte_queue)
 
-typedef struct {
-    uint8_t chState;
-    check_str_t tCheckHello;
-} check_hello_pcb_t;
 
-typedef struct {
-    uint8_t chState;
-    check_str_t tCheckOrange;
-} check_orange_pcb_t;
+//! 消息处理函数
+static fsm_rt_t msg_cat_handler(msg_t *ptMSG);
+static fsm_rt_t msg_dog_handler(msg_t *ptMSG);
+static fsm_rt_t msg_duck_handler(msg_t *ptMSG);
+ 
+//! 消息地图
+const static msg_t c_tMSGMap[] = {
+    {“cat”, &msg_cat_handler},
+    {“dog”, &msg_dog_handler},
+    {“duck”, &msg_duck_handler},
+};
 
-typedef struct {
-    uint8_t chState;
-    check_str_t tCheckApple;
-} check_apple_pcb_t;
-
-static event_t s_tPrintWorld, s_tPrintApple, s_tPrintOrange;
+static event_t s_tPrintCat, s_tPrintDog, s_tPrintDuck;
 static uint8_t s_chBytein[INPUT_FIFO_SIZE],s_chByteout[OUTPUT_FIFO_SIZE];
 static byte_queue_t s_tFIFOin, s_tFIFOout;
-static check_hello_pcb_t s_tCheckHelloPCB;
-static check_apple_pcb_t s_tCheckApplePCB;
-static check_orange_pcb_t s_tCheckOrangePCB;
 
-static fsm_rt_t task_print_world(void);
-static fsm_rt_t task_print_apple(void);
-static fsm_rt_t task_print_orange(void);
+static fsm_rt_t task_print_cat(void);
+static fsm_rt_t task_print_dog(void);
+static fsm_rt_t task_print_duck(void);
 
-static fsm_rt_t task_world(void);
-static fsm_rt_t task_apple(void);
-static fsm_rt_t task_orange(void);
+static fsm_rt_t print_cat(void);
+static fsm_rt_t print_dog(void);
+static fsm_rt_t print_duck(void);
 
 static fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte,  bool *pbRequestDrop);
 static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte,  bool *pbRequestDrop);
 static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte,  bool *pbRequestDrop);
+
+msg_t *search_msg_map(msg_t *ptMSG)
 
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
@@ -77,48 +74,37 @@ static void system_init(void)
 /*================================= MAIN =====================================*/
 int main(void)
 {
-    static const check_agent_t c_tCheckWordsAgent[] = {
-                                {&s_tCheckHelloPCB, check_hello},
-                                {&s_tCheckApplePCB, check_apple},
-                                {&s_tCheckOrangePCB, check_orange}};
-    static const check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
-                                        UBOUND(c_tCheckWordsAgent),
-                                        &s_tFIFOin,
-                                        (check_agent_t *)c_tCheckWordsAgent};
-    static check_use_peek_t s_tCheckWordsUsePeek;
     system_init();
     print_str_pool_item_init();
-    INIT_EVENT(&s_tPrintWorld, false, false);
-    INIT_EVENT(&s_tPrintApple, false, false);
-    INIT_EVENT(&s_tPrintOrange, false, false);
+    INIT_EVENT(&s_tPrintCat, false, false);
+    INIT_EVENT(&s_tPrintDog, false, false);
+    INIT_EVENT(&s_tPrintDuck, false, false);
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
-    check_use_peek_init(&s_tCheckWordsUsePeek, &c_tCheckWordsUsePeekCFG);
     LED1_OFF();
     while (1) {
         breath_led();
-        task_print_world();
-        task_print_apple();
-        task_print_orange();
-        task_check_use_peek(&s_tCheckWordsUsePeek);
+        task_print_cat();
+        task_print_dog();
+        task_print_duck();
         serial_in_task();
         serial_out_task();
     }
 }
 
 
-static fsm_rt_t task_print_world(void)
+static fsm_rt_t task_print_cat(void)
 {
     static enum {
         START,
-        PRINT_WORLD
+        PRINT_CAT
     } s_tState = START;
     switch (s_tState) {
         case START:
             s_tState = START;
             // break;
-        case PRINT_WORLD:
-            if (fsm_rt_cpl == task_world()) {
+        case PRINT_CAT:
+            if (fsm_rt_cpl == print_cat()) {
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -130,21 +116,21 @@ static fsm_rt_t task_print_world(void)
     return fsm_rt_on_going;
 }
 
-static fsm_rt_t task_world(void)
+static fsm_rt_t print_cat(void)
 {
     static print_str_t *s_ptPrintString;
     static enum {
         START,
         INIT,
         WAIT_PRINT,
-        PRINT_WORLD
+        PRINT_CAT
     } s_tState = START;
     switch (s_tState) {
         case START:
             s_tState = WAIT_PRINT;
             //break;
         case WAIT_PRINT:
-            if (WAIT_EVENT(&s_tPrintWorld)) {
+            if (WAIT_EVENT(&s_tPrintCat)) {
                 s_tState = INIT;
                 //break;
             } else {
@@ -157,18 +143,18 @@ static fsm_rt_t task_world(void)
             }
             do {
                 const print_str_cfg_t c_tCFG = {
-                    "world\r\n",
+                    "cat has four legs\r\n",
                     &s_tFIFOout,
                     FN_ENQUEUE_BYTE
                 };
                 print_string_init(s_ptPrintString, &c_tCFG);
             } while (0);
-            s_tState = PRINT_WORLD;
+            s_tState = PRINT_CAT;
             // break;
-        case PRINT_WORLD:
+        case PRINT_CAT:
             if (fsm_rt_cpl == print_string(s_ptPrintString)) {
                 print_str_pool_free(s_ptPrintString);
-                RESET_EVENT(&s_tPrintWorld);
+                RESET_EVENT(&s_tPrintCat);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -180,18 +166,18 @@ static fsm_rt_t task_world(void)
     return fsm_rt_on_going;
 }
 
-static fsm_rt_t task_print_apple(void)
+static fsm_rt_t task_print_dog(void)
 {
     static enum {
         START,
-        PRINT_APPLE
+        PRINT_DOG
     } s_tState = START;
     switch (s_tState) {
         case START:
             s_tState = START;
             // break;
-        case PRINT_APPLE:
-            if (fsm_rt_cpl == task_apple()) {
+        case PRINT_DOG:
+            if (fsm_rt_cpl == print_dog()) {
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -203,21 +189,21 @@ static fsm_rt_t task_print_apple(void)
     return fsm_rt_on_going;
 }
 
-static fsm_rt_t task_apple(void)
+static fsm_rt_t print_dog(void)
 {
     static print_str_t *s_ptPrintString;
     static enum {
         START,
         INIT,
         WAIT_PRINT,
-        PRINT_APPLE
+        PRINT_DOG
     } s_tState = START;
     switch (s_tState) {
         case START:
             s_tState = WAIT_PRINT;
             //break;
         case WAIT_PRINT:
-            if (WAIT_EVENT(&s_tPrintApple)) {
+            if (WAIT_EVENT(&s_tPrintDog)) {
                 s_tState = INIT;
                 // break;
             } else {
@@ -230,18 +216,18 @@ static fsm_rt_t task_apple(void)
             }
             do {
                 const print_str_cfg_t c_tCFG = {
-                    "apple\r\n",
+                    "dog has four legs\r\n",
                     &s_tFIFOout,
                     FN_ENQUEUE_BYTE
                 };
                 print_string_init(s_ptPrintString, &c_tCFG);
             } while (0);
-            s_tState = PRINT_APPLE;
+            s_tState = PRINT_DOG;
             // break;
-        case PRINT_APPLE:
+        case PRINT_DOG:
             if (fsm_rt_cpl == print_string(s_ptPrintString)) {
                 print_str_pool_free(s_ptPrintString);
-                RESET_EVENT(&s_tPrintApple);
+                RESET_EVENT(&s_tPrintDog);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -253,18 +239,18 @@ static fsm_rt_t task_apple(void)
     return fsm_rt_on_going;
 }
 
-static fsm_rt_t task_print_orange(void)
+static fsm_rt_t task_print_duck(void)
 {
     static enum {
         START,
-        PRINT_ORANGE
+        PRINT_DUCK
     } s_tState = START;
     switch (s_tState) {
         case START:
             s_tState = START;
             // break;
-        case PRINT_ORANGE:
-            if (fsm_rt_cpl == task_orange()) {
+        case PRINT_DUCK:
+            if (fsm_rt_cpl == print_duck()) {
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -276,21 +262,21 @@ static fsm_rt_t task_print_orange(void)
     return fsm_rt_on_going;
 }
 
-static fsm_rt_t task_orange(void)
+static fsm_rt_t print_duck(void)
 {
     static print_str_t* s_ptPrintString;
     static enum {
         START,
         INIT,
         WAIT_PRINT,
-        PRINT_ORANGE
+        PRINT_DUCK
     } s_tState = START;
     switch (s_tState) {
         case START:
             s_tState = WAIT_PRINT;
             //break;
         case WAIT_PRINT:
-            if (WAIT_EVENT(&s_tPrintOrange)) {
+            if (WAIT_EVENT(&s_tPrintDuck)) {
                 s_tState = INIT;
                 // break;
             } else {
@@ -303,18 +289,18 @@ static fsm_rt_t task_orange(void)
             }
             do {
                 const print_str_cfg_t c_tCFG = {
-                    "orange\r\n",
+                    "duck has two legs\r\n",
                     &s_tFIFOout,
                     FN_ENQUEUE_BYTE
                 };
                 print_string_init(s_ptPrintString, &c_tCFG);
             } while (0);
-            s_tState = PRINT_ORANGE;
+            s_tState = PRINT_DUCK;
             // break;
-        case PRINT_ORANGE:
+        case PRINT_DUCK:
             if (fsm_rt_cpl == print_string(s_ptPrintString)) {
                 print_str_pool_free(s_ptPrintString);
-                RESET_EVENT(&s_tPrintOrange);
+                RESET_EVENT(&s_tPrintDuck);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -325,6 +311,7 @@ static fsm_rt_t task_orange(void)
     }
     return fsm_rt_on_going;
 }
+
 
 fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop)
 {
@@ -347,7 +334,7 @@ fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *p
         case CHECK_STRING:
             *pbRequestDrop = false;
             if (fsm_rt_cpl == check_string(&this.tCheckHello, pbRequestDrop)) {
-                SET_EVENT(&s_tPrintWorld);
+                SET_EVENT(&s_tPrintCat);
                 TASK_CHECK_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -380,7 +367,7 @@ static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte, 
         case CHECK_STRING:
             *pbRequestDrop = false;
             if (fsm_rt_cpl == check_string(&this.tCheckApple, pbRequestDrop)) {
-                SET_EVENT(&s_tPrintApple);
+                SET_EVENT(&s_tPrintDog);
                 TASK_CHECK_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -413,7 +400,7 @@ static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte,
         case CHECK_STRING:
             *pbRequestDrop = false;
             if (fsm_rt_cpl == check_string(&this.tCheckOrange, pbRequestDrop)) {
-                SET_EVENT(&s_tPrintOrange);
+                SET_EVENT(&s_tPrintDuck);
                 TASK_CHECK_RESET_FSM();
                 return fsm_rt_cpl;
             }
