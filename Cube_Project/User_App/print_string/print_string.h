@@ -10,17 +10,17 @@ typedef struct {
     uint8_t chState;
     uint8_t *pchString;
     void *pTarget;
-    #ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
+#ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
     print_byte_t *fnPrintByte;
-    #endif
+#endif
 } print_str_t;
 
 typedef struct {
     uint8_t *pchString;
     void *pTarget;
-    #ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
+#ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
     print_byte_t *fnPrintByte;
-    #endif
+#endif
 } print_str_cfg_t;
 
 #define PRINT_STR_POOL_ITEM_SIZE sizeof(print_str_t)
@@ -30,7 +30,7 @@ typedef struct print_str_pool_item_t print_str_pool_item_t;
 struct print_str_pool_item_t {
     uint8_t chBuffer[PRINT_STR_POOL_ITEM_SIZE];
     bool bIsFree;
-};
+} ALIGN(__alignof__(print_str_t));
 
 print_str_t *print_str_pool_allocate(void);
 void print_str_pool_free(print_str_t *ptItem);

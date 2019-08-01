@@ -459,11 +459,6 @@
               <FilePath>..\User_App\app_cfg.h</FilePath>
             </File>
             <File>
-              <FileName>platform.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User_App\platform.h</FilePath>
-            </File>
-            <File>
               <FileName>check_string.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User_App\check_string\check_string.c</FilePath>

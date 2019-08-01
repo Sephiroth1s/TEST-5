@@ -2,7 +2,7 @@
 #include "vsf.h"
 #include "main.h"
 #include <stdio.h>
-#include "../User_App/platform.h"
+#include "main.h"
 #include "../User_App/queue/queue.h"
 #include "../User_App/led/led.h"
 
@@ -48,9 +48,9 @@ static fsm_rt_t print_cat(void);
 static fsm_rt_t print_dog(void);
 static fsm_rt_t print_duck(void);
 
-static fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte,  bool *pbRequestDrop);
-static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte,  bool *pbRequestDrop);
-static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte,  bool *pbRequestDrop);
+static fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
+static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
+static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 
 msg_t *search_msg_map(msg_t *ptMSG)
 
@@ -68,7 +68,6 @@ static void system_init(void)
     /* Initialize all configured peripherals */
     MX_GPIO_Init();
     vsf_stdio_init();
-
 }
 
 /*================================= MAIN =====================================*/
@@ -91,7 +90,6 @@ int main(void)
         serial_out_task();
     }
 }
-
 
 static fsm_rt_t task_print_cat(void)
 {
@@ -264,7 +262,7 @@ static fsm_rt_t task_print_duck(void)
 
 static fsm_rt_t print_duck(void)
 {
-    static print_str_t* s_ptPrintString;
+    static print_str_t *s_ptPrintString;
     static enum {
         START,
         INIT,

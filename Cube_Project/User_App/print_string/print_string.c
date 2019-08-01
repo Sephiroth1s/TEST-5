@@ -38,9 +38,9 @@ bool print_string_init(print_str_t *ptThis, const print_str_cfg_t *ptCFG)
     this.chState = START;
     this.pchString = ptCFG->pchString;
     this.pTarget = ptCFG->pTarget;
-    #ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
+#ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
     this.fnPrintByte = ptCFG->fnPrintByte;
-    #endif 
+#endif
     return true;
 }
 
@@ -67,17 +67,17 @@ fsm_rt_t print_string(print_str_t *ptThis)
             }
             // break;
         case PRINT_STR:
-            #ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
+#ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
             if (PRINT_STR_OUTPUT_BYTE(this.pTarget, *this.pchString)) {
                 this.pchString++;
                 this.chState = PRINT_CHECK;
             }
-            #else
+#else
             if (PRINT_STR_OUTPUT_BYTE(*this.pchString)) {
                 this.pchString++;
                 this.chState = PRINT_CHECK;
             }
-            #endif
+#endif
             break;
         default:
             return fsm_rt_err;
@@ -101,14 +101,17 @@ print_str_t *print_str_pool_allocate(void)
     if (!s_chAllocateLength) {
         return NULL;
     }
-    if (s_tPrintStringPool[s_chAllocateIndex].bIsFree) {
-        s_tPrintStringPool[s_chAllocateIndex].bIsFree = false;
-        s_chAllocateLength--;
-        return (print_str_t *)(s_tPrintStringPool[s_chAllocateIndex].chBuffer);
-    }
-    s_chAllocateIndex++;
-    if (s_chAllocateIndex >= UBOUND(s_tPrintStringPool)) {
-        s_chAllocateIndex = 0;
+    for (uint8_t chCounter = 0; chCounter < UBOUND(s_tPrintStringPool); chCounter++) {
+        if (s_chAllocateIndex >= UBOUND(s_tPrintStringPool)) {
+            s_chAllocateIndex = 0;
+        }
+        if (s_tPrintStringPool[s_chAllocateIndex].bIsFree) {
+            s_tPrintStringPool[s_chAllocateIndex].bIsFree = false;
+            s_chAllocateLength--;
+            s_chAllocateIndex++;
+            return (print_str_t *)(s_tPrintStringPool[s_chAllocateIndex].chBuffer);
+        }
+        s_chAllocateIndex++;
     }
     return NULL;
 }
@@ -116,11 +119,12 @@ print_str_t *print_str_pool_allocate(void)
 void print_str_pool_free(print_str_t *ptItem)
 {
     print_str_pool_item_t *ptThis=(print_str_pool_item_t *)ptItem;
-    if (   (ptItem != NULL)
-        && (!this.bIsFree)  
-        && (ptThis >= &s_tPrintStringPool[0]) 
-        && (ptThis <= &s_tPrintStringPool[UBOUND(s_tPrintStringPool)-1])) {
-        this.bIsFree = true;
-        s_chAllocateLength++;
+    if (ptItem != NULL) {
+        if (   (!this.bIsFree) 
+            && (ptThis >= &s_tPrintStringPool[0]) 
+            && (ptThis <= &s_tPrintStringPool[UBOUND(s_tPrintStringPool) - 1])) {
+            this.bIsFree = true;
+            s_chAllocateLength++;
+        }
     }
 }
