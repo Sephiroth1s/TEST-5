@@ -339,7 +339,7 @@
               <MiscControls>-Omax -fms-extensions -Wno-empty-body -Wno-microsoft-anon-tag -Wno-nonportable-include-path -Wno-tautological-constant-out-of-range-compare</MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xB,_MSC_VER,VSF_UTILITIES_REQ___CMSIS_HEADER_FILE__FROM_USR=\"stm32f1xx_hal.h\"</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;..\..\Vsf\release\kernel\beta\vsf;..\..\Vsf\release\kernel\beta\example\usrapp\template\app_cfg;..\User_App\check_string;..\User_App\check_use_peek;..\User_App\critical_sector;..\User_App\event;..\User_App\key;..\User_App\led;..\User_App\mailbox;..\User_App\print_string;..\User_App\queue</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;..\..\Vsf\release\kernel\beta\vsf;..\..\Vsf\release\kernel\beta\example\usrapp\template\app_cfg;..\User_App\check_string;..\User_App\check_use_peek;..\User_App\critical_sector;..\User_App\event;..\User_App\key;..\User_App\led;..\User_App\mailbox;..\User_App\print_string;..\User_App\queue;..\User_App\msg_map</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -462,6 +462,11 @@
               <FileName>check_string.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User_App\check_string\check_string.c</FilePath>
+            </File>
+            <File>
+              <FileName>msg_map.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User_App\msg_map\msg_map.c</FilePath>
             </File>
           </Files>
         </Group>

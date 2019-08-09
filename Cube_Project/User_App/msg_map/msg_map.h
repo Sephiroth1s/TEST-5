@@ -11,20 +11,31 @@ typedef struct _msg_t msg_t;
 typedef fsm_rt_t msg_hanlder_t (msg_t *ptMSG);
 //! 消息（要处理的数据以及处理该数据的方法）
 struct _msg_t {
-        uint8_t *pchMessage;   
-        void *pTarget;        
-        msg_hanlder_t *fnHandler;
+    uint8_t *pchMessage;   
+    void *pTarget;        
+    msg_hanlder_t *fnHandler;
 };
 
 typedef struct {
-    uint8_t chState;
-    uint8_t chAgentsNumber;
-    uint8_t chVoteDropCount;
-    uint8_t chWordsCount;
+    uint8_t chMSGNumber;
     byte_queue_t *ptQueue;
-    read_byte_evt_handler_t tReadByte;
-    check_agent_t *ptAgents;
-    msg_t *ptAgentsHanlder;
+    read_byte_evt_handler_t *ptReadByteEvent;
+    msg_t *ptMSGMap;
+} search_msg_map_cfg_t;
+
+typedef struct {
+    uint8_t chState;
+    uint8_t chMSGNumber;
+    uint8_t chVoteDropCount;
+    uint8_t chMSGCount;
+    bool bIsRequestDrop;
+    byte_queue_t *ptQueue;
+    read_byte_evt_handler_t *ptReadByteEvent;
+    check_str_t ptCheckMSG;
+    msg_t *ptMSGMap;
 } search_msg_map_t;
+
+extern bool search_msg_map_init(search_msg_map_t *ptThis, search_msg_map_cfg_t *ptCFG);
+extern msg_t *search_msg_map(search_msg_map_t *ptThis);
 
 #endif

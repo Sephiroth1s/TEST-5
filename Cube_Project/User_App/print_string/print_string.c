@@ -35,6 +35,7 @@ bool print_string_init(print_str_t *ptThis, const print_str_cfg_t *ptCFG)
         || (NULL == ptCFG->fnPrintByte)) {
         return false;
     }
+    printf("print_init:%p",ptThis);
     this.chState = START;
     this.pchString = ptCFG->pchString;
     this.pTarget = ptCFG->pTarget;
@@ -119,6 +120,18 @@ print_str_t *print_str_pool_allocate(void)
 void print_str_pool_free(print_str_t *ptItem)
 {
     print_str_pool_item_t *ptThis=(print_str_pool_item_t *)ptItem;
+    if(ptItem==NULL)
+    {
+        printf("ptItem_NULL");
+    }
+    if (!this.bIsFree)
+    {
+        printf("pool_no_free");
+    }
+    else{
+        printf("\r\npool_free:%p\t%p\t%p ",ptThis,&s_tPrintStringPool[0],&s_tPrintStringPool[UBOUND(s_tPrintStringPool) - 1]);
+    }
+    
     if (ptItem != NULL) {
         if (   (!this.bIsFree) 
             && (ptThis >= &s_tPrintStringPool[0]) 
