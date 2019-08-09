@@ -31,7 +31,7 @@ typedef struct {
     bool bIsRequestDrop;
     byte_queue_t *ptQueue;
     read_byte_evt_handler_t *ptReadByteEvent;
-    check_str_t ptCheckMSG;
+    check_str_t tCheckMSG;
     msg_t *ptMSGMap;
 } search_msg_map_t;
 

@@ -59,12 +59,12 @@ msg_t *search_msg_map(search_msg_map_t *ptThis)
                 this.bIsRequestDrop = false;
                 RESET_PEEK_BYTE(this.ptQueue);
                 const check_str_cfg_t c_tCheckMSGCFG = {(this.ptMSGMap[this.chMSGCount]).pchMessage, this.ptReadByteEvent};
-                check_string_init(&this.ptCheckMSG, &c_tCheckMSGCFG);
+                check_string_init(&this.tCheckMSG, &c_tCheckMSGCFG);
             } while (0);
             this.chState = CHECK_MSG;
             //break;
         case CHECK_MSG:
-            if (fsm_rt_cpl == check_string(&this.ptCheckMSG, &this.bIsRequestDrop)) {
+            if (fsm_rt_cpl == check_string(&this.tCheckMSG, &this.bIsRequestDrop)) {
                 GET_ALL_PEEKED_BYTE(this.ptQueue);
                 this.chState = MSG_HANLDER;
                 return this.ptMSGMap;

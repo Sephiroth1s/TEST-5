@@ -4,9 +4,9 @@
 #include <stdio.h>
 
 #define this (*ptThis)
-#define TASK_REENTER_RESET_FSM()      \
-    do {                      \
-        this.chState = START; \
+#define TASK_REENTER_RESET_FSM() \
+    do {                         \
+        this.chState = START;    \
     } while (0)
 #define TASK_RESET_FSM()  \
     do {                  \
