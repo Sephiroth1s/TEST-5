@@ -26,8 +26,7 @@ bool search_msg_map_init(search_msg_map_t *ptThis, search_msg_map_cfg_t *ptCFG)
         if (    (NULL == ptThis) 
             ||  (NULL == ptCFG->ptReadByteEvent)
             ||  (NULL == ptCFG->ptMSGMap)
-            ||  (NULL == ptCFG->ptQueue))
-            {
+            ||  (NULL == ptCFG->ptQueue)){
                 return false;
             }
     }
@@ -97,13 +96,12 @@ msg_t *search_msg_map(search_msg_map_t *ptThis)
             TASK_RESET_FSM();
             break;
         case MSG_HANLDER:
-        // GOTO_MSG_HANLDER:
+        GOTO_MSG_HANLDER:
             if (fsm_rt_cpl == (this.ptMSGMap[this.chMSGCount]).fnHandler(&this.ptMSGMap[this.chMSGCount])) {
                 this.chState = CHECK_MSG_NUMBER;
                 TASK_RESET_FSM();
             } else {
-                
-                // goto GOTO_MSG_HANLDER;
+                goto GOTO_MSG_HANLDER;
             }
             break;
         default:
