@@ -108,8 +108,7 @@ print_str_t *print_str_pool_allocate(void)
         if (s_tPrintStringPool[s_chAllocateIndex].bIsFree) {
             s_tPrintStringPool[s_chAllocateIndex].bIsFree = false;
             s_chAllocateLength--;
-            s_chAllocateIndex++;
-            return (print_str_t *)(s_tPrintStringPool[s_chAllocateIndex].chBuffer);
+            return (print_str_t *)(s_tPrintStringPool[s_chAllocateIndex++].chBuffer);
         }
         s_chAllocateIndex++;
     }
