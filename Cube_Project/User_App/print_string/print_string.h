@@ -24,17 +24,19 @@ typedef struct {
 } print_str_cfg_t;
 
 #define PRINT_STR_POOL_ITEM_SIZE sizeof(print_str_t)
-#define PRINT_STR_POOL_ITEM_COUNT 2
 
-typedef struct print_str_pool_item_t print_str_pool_item_t;
-struct print_str_pool_item_t {
-    uint8_t chBuffer[PRINT_STR_POOL_ITEM_SIZE];
-    bool bIsFree;
-} ALIGN(__alignof__(print_str_t));
+typedef struct print_str_pool_item_t print_str_pool_item_t;  
+struct print_str_pool_item_t{  
+	uint8_t chBuffer[PRINT_STR_POOL_ITEM_SIZE];   //!< 节点的数据区域，可以是任何内容  
+    print_str_pool_item_t *ptNext;
+}ALIGN(__alignof__(print_str_t));  
 
-print_str_t *print_str_pool_allocate(void);
-void print_str_pool_free(print_str_t *ptItem);
+static void print_str_pool_push(print_str_pool_item_t *ptThis);
+
 extern void print_str_pool_item_init(void);
+extern print_str_t *print_str_pool_allocate(void);
+extern void print_str_pool_free(print_str_t *ptItem);
+extern bool print_str_pool_add_heap(void *pTartget, uint16_t hwSize);
 
 extern fsm_rt_t print_string(print_str_t *ptThis);
 extern bool print_string_init(print_str_t *ptThis, const print_str_cfg_t *ptCFG);

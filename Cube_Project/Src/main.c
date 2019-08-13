@@ -41,7 +41,7 @@ static fsm_rt_t msg_duck_handler(msg_t *ptMSG);
 
 static uint8_t s_chBytein[INPUT_FIFO_SIZE],s_chByteout[OUTPUT_FIFO_SIZE];
 static byte_queue_t s_tFIFOin, s_tFIFOout;
-
+static uint8_t s_chPrintStrPool[120];
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
 
@@ -74,6 +74,7 @@ int main(void)
     static search_msg_map_t s_tSearchMSGMap;
     system_init();
     print_str_pool_item_init();
+    print_str_pool_add_heap(s_chPrintStrPool,UBOUND(s_chPrintStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
     search_msg_map_init(&s_tSearchMSGMap,&c_tSearchMSGMapCFG);
@@ -85,7 +86,6 @@ int main(void)
         serial_out_task();
     }
 }
-
 
 static fsm_rt_t msg_cat_handler(msg_t *ptMSG)
 {
