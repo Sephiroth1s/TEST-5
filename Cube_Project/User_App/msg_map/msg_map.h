@@ -19,7 +19,6 @@ struct _msg_t {
 typedef struct {
     uint8_t chMSGNumber;
     byte_queue_t *ptQueue;
-    read_byte_evt_handler_t *ptReadByteEvent;
     msg_t *ptMSGMap;
 } search_msg_map_cfg_t;
 
@@ -30,12 +29,13 @@ typedef struct {
     uint8_t chMSGCount;
     bool bIsRequestDrop;
     byte_queue_t *ptQueue;
-    read_byte_evt_handler_t *ptReadByteEvent;
+    read_byte_evt_handler_t ptReadByteEvent;
     check_str_t tCheckMSG;
     msg_t *ptMSGMap;
 } search_msg_map_t;
 
 extern bool search_msg_map_init(search_msg_map_t *ptThis, search_msg_map_cfg_t *ptCFG);
 extern msg_t *search_msg_map(search_msg_map_t *ptThis);
+extern void msg_map_hanlder(msg_t*ptThis);
 
 #endif

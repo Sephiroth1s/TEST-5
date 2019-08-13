@@ -65,11 +65,9 @@ int main(void)
                         {"cat", &s_tCatHandlerPCB, &msg_cat_handler},
                         {"dog", &s_tCatHandlerPCB, &msg_dog_handler},
                         {"duck", &s_tCatHandlerPCB, &msg_duck_handler}};
-     const static read_byte_evt_handler_t c_tReadByte = {&peek_byte_queue, &s_tFIFOin};
      const static search_msg_map_cfg_t c_tSearchMSGMapCFG = {
                                         UBOUND(c_tMSGMap), 
                                         &s_tFIFOin, 
-                                        &c_tReadByte,
                                         c_tMSGMap};
     static search_msg_map_t s_tSearchMSGMap;
     system_init();
@@ -80,7 +78,7 @@ int main(void)
     LED1_OFF();
     while (1) {
         breath_led();
-        search_msg_map(&s_tSearchMSGMap);
+        msg_map_hanlder(search_msg_map(&s_tSearchMSGMap));
         serial_in_task();
         serial_out_task();
     }
