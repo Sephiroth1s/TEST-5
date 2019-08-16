@@ -29,13 +29,33 @@ typedef struct {
     uint8_t chMSGCount;
     bool bIsRequestDrop;
     byte_queue_t *ptQueue;
-    read_byte_evt_handler_t ptReadByteEvent;
+    read_byte_evt_handler_t tReadByteEvent;
     check_str_t tCheckMSG;
     msg_t *ptMSGMap;
 } search_msg_map_t;
 
+typedef struct {
+    uint8_t chMSGNumber;
+    byte_queue_t *ptQueue;
+    msg_t *ptMSGMap;
+} check_msg_map_cfg_t;
+
+typedef struct {
+    uint8_t chState;
+    uint8_t chMSGNumber;
+    uint8_t chVoteDropCount;
+    uint8_t chMSGCount;
+    bool bIsRequestDrop;
+    byte_queue_t *ptQueue;
+    check_str_t tCheckMSG;
+    msg_t *ptMSGMap;
+} check_msg_map_t;
+
 extern bool search_msg_map_init(search_msg_map_t *ptThis, search_msg_map_cfg_t *ptCFG);
 extern msg_t *search_msg_map(search_msg_map_t *ptThis);
-extern void msg_map_hanlder(msg_t*ptThis);
+extern void msg_map_hanlder(msg_t *ptThis);
+
+extern bool check_msg_map_init(check_msg_map_t *ptThis, check_msg_map_cfg_t *ptCFG);
+extern fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 
 #endif
