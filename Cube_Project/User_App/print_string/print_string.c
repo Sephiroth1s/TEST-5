@@ -21,8 +21,9 @@
 #endif
 #endif
 
-static print_str_pool_item_t s_tPrintStringPool[PRINT_STR_POOL_ITEM_COUNT];
-static uint8_t s_chAllocateLength = PRINT_STR_POOL_ITEM_COUNT;
+#define PRINT_STR_POOL_ITEM_TOTAL_SIZE sizeof(print_str_pool_item_t)
+
+static print_str_pool_item_t *s_ptFreeList;
 
 bool print_string_init(print_str_t *ptThis, const print_str_cfg_t *ptCFG)
 {
@@ -88,42 +89,46 @@ fsm_rt_t print_string(print_str_t *ptThis)
 
 void print_str_pool_item_init(void)
 {
-    uint8_t chAllocateCounter = 0;
-    while (chAllocateCounter < UBOUND(s_tPrintStringPool)) {
-        s_tPrintStringPool[chAllocateCounter].bIsFree = true;
-        chAllocateCounter++;
+    s_ptFreeList = NULL;
+}
+
+bool print_str_pool_add_heap(void *pTartget, uint16_t hwSize)
+{
+    uint8_t *ptThis = (uint8_t *)pTartget;
+    if ((NULL == pTartget) || (hwSize < PRINT_STR_POOL_ITEM_TOTAL_SIZE)) {
+        printf("memory block is too small, please at least %d\r\n", PRINT_STR_POOL_ITEM_TOTAL_SIZE);
+        return false;
+    } else {
+        for (uint16_t hwSizeCounter = hwSize; PRINT_STR_POOL_ITEM_TOTAL_SIZE < hwSizeCounter; hwSizeCounter -= PRINT_STR_POOL_ITEM_TOTAL_SIZE) {
+            print_str_pool_push((print_str_pool_item_t *)ptThis);
+            ptThis = ptThis + PRINT_STR_POOL_ITEM_TOTAL_SIZE;
+        }
+        return true;
     }
 }
 
 print_str_t *print_str_pool_allocate(void)
 {
-    static uint8_t s_chAllocateIndex = 0;
-    if (!s_chAllocateLength) {
+    print_str_pool_item_t *ptThis;
+    if (NULL == s_ptFreeList) {
+        printf("pool is null\r\n");
         return NULL;
     }
-    for (uint8_t chCounter = 0; chCounter < UBOUND(s_tPrintStringPool); chCounter++) {
-        if (s_chAllocateIndex >= UBOUND(s_tPrintStringPool)) {
-            s_chAllocateIndex = 0;
-        }
-        if (s_tPrintStringPool[s_chAllocateIndex].bIsFree) {
-            s_tPrintStringPool[s_chAllocateIndex].bIsFree = false;
-            s_chAllocateLength--;
-            return (print_str_t *)(s_tPrintStringPool[s_chAllocateIndex++].chBuffer);
-        }
-        s_chAllocateIndex++;
-    }
-    return NULL;
+    ptThis = s_ptFreeList;
+    s_ptFreeList = s_ptFreeList->ptNext;
+    this.ptNext = NULL;
+    return (print_str_t *)this.chBuffer;
 }
 
 void print_str_pool_free(print_str_t *ptItem)
 {
-    print_str_pool_item_t *ptThis=(print_str_pool_item_t *)ptItem;
     if (ptItem != NULL) {
-        if (   (!this.bIsFree) 
-            && (ptThis >= &s_tPrintStringPool[0]) 
-            && (ptThis <= &s_tPrintStringPool[UBOUND(s_tPrintStringPool) - 1])) {
-            this.bIsFree = true;
-            s_chAllocateLength++;
-        }
+        print_str_pool_push((print_str_pool_item_t *)ptItem);
     }
+}
+
+void print_str_pool_push(print_str_pool_item_t *ptThis)  //入栈
+{
+    this.ptNext = s_ptFreeList;
+    s_ptFreeList = ptThis;
 }
