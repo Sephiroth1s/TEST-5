@@ -54,9 +54,9 @@ typedef struct {
 static cat_handler_pcb_t s_tCatHandlerPCB;
 static dog_handler_pcb_t s_tDogHandlerPCB;
 static duck_handler_pcb_t s_tDuckHandlerPCB;
-static fsm_rt_t msg_cat_handler(msg_t *ptMSG);
-static fsm_rt_t msg_dog_handler(msg_t *ptMSG);
-static fsm_rt_t msg_duck_handler(msg_t *ptMSG);
+static void msg_cat_handler(msg_t *ptMSG);
+static void msg_dog_handler(msg_t *ptMSG);
+static void msg_duck_handler(msg_t *ptMSG);
 
 static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE];
 static byte_queue_t s_tFIFOin, s_tFIFOout;
@@ -79,7 +79,7 @@ static fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, 
 static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 
-static uint8_t s_chPrintStrPool[120];
+static uint8_t s_chPrintStrPool[120] ALIGN(__alignof__(print_str_t));
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
 
@@ -142,7 +142,7 @@ int main(void)
     }
 }
 
-static fsm_rt_t msg_cat_handler(msg_t *ptMSG)
+static void msg_cat_handler(msg_t *ptMSG)
 {
     cat_handler_pcb_t *ptThis = (cat_handler_pcb_t *)ptMSG->pTarget;
     enum {
@@ -171,20 +171,20 @@ static fsm_rt_t msg_cat_handler(msg_t *ptMSG)
             this.chState = PRINT_CAT;
             // break;
         case PRINT_CAT:
+        GOTO_PRINT_CAT:
             if (fsm_rt_cpl == print_string(this.ptPrintString)) {
                 print_str_pool_free(this.ptPrintString);
                 TASK_REENTER_RESET_FSM();
-                return fsm_rt_cpl;
+            }else{
+                goto GOTO_PRINT_CAT;
             }
             break;
         default:
-            return fsm_rt_err;
             break;
     }
-    return fsm_rt_on_going;
 }
 
-static fsm_rt_t msg_dog_handler(msg_t *ptMSG)
+static void msg_dog_handler(msg_t *ptMSG)
 {
     dog_handler_pcb_t *ptThis = (dog_handler_pcb_t *)ptMSG->pTarget;
     enum {
@@ -213,20 +213,20 @@ static fsm_rt_t msg_dog_handler(msg_t *ptMSG)
             this.chState = PRINT_DOG;
             // break;
         case PRINT_DOG:
+        GOTO_PRINT_DOG:
             if (fsm_rt_cpl == print_string(this.ptPrintString)) {
                 print_str_pool_free(this.ptPrintString);
                 TASK_REENTER_RESET_FSM();
-                return fsm_rt_cpl;
+            } else {
+                goto GOTO_PRINT_DOG;
             }
             break;
         default:
-            return fsm_rt_err;
             break;
     }
-    return fsm_rt_on_going;
 }
 
-static fsm_rt_t msg_duck_handler(msg_t *ptMSG)
+static void msg_duck_handler(msg_t *ptMSG)
 {
     duck_handler_pcb_t *ptThis = (duck_handler_pcb_t *)ptMSG->pTarget;
     enum {
@@ -255,17 +255,17 @@ static fsm_rt_t msg_duck_handler(msg_t *ptMSG)
             this.chState = PRINT_DUCK;
             // break;
         case PRINT_DUCK:
+        GOTO_PRINT_DUCK:
             if (fsm_rt_cpl == print_string(this.ptPrintString)) {
                 print_str_pool_free(this.ptPrintString);
                 TASK_REENTER_RESET_FSM();
-                return fsm_rt_cpl;
+            } else {
+                goto GOTO_PRINT_DUCK;
             }
             break;
         default:
-            return fsm_rt_err;
             break;
     }
-    return fsm_rt_on_going;
 }
 
 static fsm_rt_t task_print_world(void)

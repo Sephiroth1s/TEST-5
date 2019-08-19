@@ -8,7 +8,7 @@
 
 typedef struct _msg_t msg_t;
 //! 消息的处理函数
-typedef fsm_rt_t msg_hanlder_t (msg_t *ptMSG);
+typedef void msg_hanlder_t (msg_t *ptMSG);
 //! 消息（要处理的数据以及处理该数据的方法）
 struct _msg_t {
     uint8_t *pchMessage;   
@@ -50,10 +50,6 @@ typedef struct {
     check_str_t tCheckMSG;
     msg_t *ptMSGMap;
 } check_msg_map_t;
-
-extern bool search_msg_map_init(search_msg_map_t *ptThis, search_msg_map_cfg_t *ptCFG);
-extern msg_t *search_msg_map(search_msg_map_t *ptThis);
-extern void msg_map_hanlder(msg_t *ptThis);
 
 extern bool check_msg_map_init(check_msg_map_t *ptThis, check_msg_map_cfg_t *ptCFG);
 extern fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
