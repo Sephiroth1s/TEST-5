@@ -25,8 +25,8 @@ typedef struct {
 
 #define PRINT_STR_POOL_ITEM_SIZE sizeof(print_str_t)
 
-typedef struct print_str_pool_item_t print_str_pool_item_t;  
-struct print_str_pool_item_t{  
+typedef union print_str_pool_item_t print_str_pool_item_t;  
+union print_str_pool_item_t{  
 	uint8_t chBuffer[PRINT_STR_POOL_ITEM_SIZE];   //!< 节点的数据区域，可以是任何内容  
     print_str_pool_item_t *ptNext;
 }ALIGN(__alignof__(print_str_t));  

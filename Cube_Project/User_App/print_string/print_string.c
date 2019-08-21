@@ -21,9 +21,7 @@
 #endif
 #endif
 
-#define PRINT_STR_POOL_ITEM_TOTAL_SIZE sizeof(print_str_pool_item_t)
-
-static print_str_pool_item_t *s_ptFreeList;
+static print_str_pool_item_t *s_ptFreeList = NULL;
 
 bool print_string_init(print_str_t *ptThis, const print_str_cfg_t *ptCFG)
 {
@@ -95,13 +93,13 @@ void print_str_pool_item_init(void)
 bool print_str_pool_add_heap(void *pTartget, uint16_t hwSize)
 {
     uint8_t *ptThis = (uint8_t *)pTartget;
-    if ((NULL == pTartget) || (hwSize < PRINT_STR_POOL_ITEM_TOTAL_SIZE)) {
-        printf("memory block is too small, please at least %d\r\n", PRINT_STR_POOL_ITEM_TOTAL_SIZE);
+    if ((NULL == pTartget) || (hwSize < sizeof(print_str_pool_item_t))) {
+        printf("memory block is too small, please at least %d\r\n", sizeof(print_str_pool_item_t));
         return false;
     } else {
-        for (uint16_t hwSizeCounter = hwSize; PRINT_STR_POOL_ITEM_TOTAL_SIZE < hwSizeCounter; hwSizeCounter -= PRINT_STR_POOL_ITEM_TOTAL_SIZE) {
+        for (uint16_t hwSizeCounter = hwSize; sizeof(print_str_pool_item_t) < hwSizeCounter; hwSizeCounter -= sizeof(print_str_pool_item_t)) {
             print_str_pool_push((print_str_pool_item_t *)ptThis);
-            ptThis = ptThis + PRINT_STR_POOL_ITEM_TOTAL_SIZE;
+            ptThis = ptThis + sizeof(print_str_pool_item_t);
         }
         return true;
     }
@@ -114,6 +112,7 @@ print_str_t *print_str_pool_allocate(void)
         printf("pool is null\r\n");
         return NULL;
     }
+    printf("size:union%d\t size:print_str%d",sizeof(print_str_pool_item_t),PRINT_STR_POOL_ITEM_SIZE);
     ptThis = s_ptFreeList;
     s_ptFreeList = s_ptFreeList->ptNext;
     this.ptNext = NULL;
