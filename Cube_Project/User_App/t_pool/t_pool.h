@@ -23,13 +23,72 @@
 
 #define POOL(__NAME) __NAME##_item_pool_t
 
-#define EXTERN_POOL(__NAME, __TYPE, __PTR_TYPE) \
-    DECLARE_CLASS(__NAME##_item_pool_t)         \
-    EXTERN_CLASS(__NAME##_item_pool_t)          \
-    __TYPE *PtBuffer;                           \
-    __PTR_TYPE *ptNext\
-END_EXTERN_CLASS(__NAME##_item_pool_t)\
+#define EXTERN_POOL(__NAME, __TYPE, __PTR_TYPE)         \
+    DECLARE_CLASS(__NAME##_item_pool_t)                 \
+    EXTERN_CLASS(__NAME##_item_pool_t)                  \
+    __TYPE *ptBuffer;                                   \
+    __PTR_TYPE *ptNext;                                 \
+    END_EXTERN_CLASS(__NAME##_item_pool_t)              \
+    extern void __NAME##_item_init(                     \
+        __NAME##_pool_item_t *ptPool);                  \
+    extern _TYPE *__NAME##_pool_allocate(               \
+        __NAME##_pool_item_t *ptPool);                  \
+    extern bool __NAME##_pool_add_heap(                 \
+        __NAME##_pool_item_t *ptPool, uint8_t *pTarget, \
+        uint16_t hwSize);                               \
+    extern void __NAME##_pool_free(                     \
+        __NAME##_pool_item_t *ptPool, __TYPE *ptItem);  \
+    static void __NAME##_pool_push(                     \
+        __NAME##_pool_item_t *ptPool);
 
+#define DEF_POOL_EX(__NAME, __TYPE, __PTR_TYPE)           \
+    DECLARE_CLASS(__NAME##_item_pool_t)                   \
+    EXTERN_CLASS(__NAME##_item_pool_t)                    \
+    __TYPE *ptBuffer;                                     \
+    __PTR_TYPE *ptNext;                                   \
+    END_EXTERN_CLASS(__NAME##_item_pool_t)                \
+    extern void __NAME##_item_init(                       \
+        __NAME##_pool_item_t *ptPool);                    \
+    extern _TYPE *__NAME##_pool_allocate(                 \
+        __NAME##_pool_item_t *ptPool);                    \
+    extern bool __NAME##_pool_add_heap(                   \
+        __NAME##_pool_item_t *ptPool, uint8_t *pTarget,   \
+        uint16_t hwSize);                                 \
+    extern void __NAME##_pool_free(                       \
+        __NAME##_pool_item_t *ptPool, __TYPE *ptItem);    \
+    static void __NAME##_pool_push(                       \
+        __NAME##_pool_item_t *ptPool);                    \
+    void __NAME##_item_init(__NAME##_pool_item_t *ptPool) \
+    {                                                     \
+        ptPool = NULL;                                    \
+    }                                                     \
+                                                          \
+    _TYPE *__NAME##_pool_allocate(                        \
+        __NAME##_pool_item_t *ptPool)                     \
+    {                                                     \
+        __NAME##_pool_item_t *ptThis;                     \
+        if (NULL == ptPool) {                             \
+            return NULL;                                  \
+        }                                                 \
+        ptThis = ptPool;                                  \
+        ptPool = ptPool->ptNext;                          \
+        ptThis->ptNext = NULL;                            \
+        return (__TYPE *)ptThis->ptBuffer                 \
+    }                                                     \
+                                                          \
+    bool __NAME##_pool_add_heap(                          \
+        __NAME##_pool_item_t *ptPool, uint8_t *pTarget,   \
+        uint16_t hwSize)                                  \
+    {                                                     \
+    }                                                     \
+                                                          \
+    void __NAME##_pool_free(__NAME##_pool_item_t *ptPool, \
+                            __TYPE *ptItem)               \
+    {                                                     \
+    }                                                     \
+                                                          \
+    void __NAME##_pool_push(__NAME##_pool_item_t *ptPool) \
+    {}  \        
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 /*============================ LOCAL VARIABLES ===============================*/

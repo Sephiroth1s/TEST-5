@@ -109,10 +109,8 @@ print_str_t *print_str_pool_allocate(void)
 {
     print_str_pool_item_t *ptThis;
     if (NULL == s_ptFreeList) {
-        printf("pool is null\r\n");
         return NULL;
     }
-    printf("size:union%d\t size:print_str%d",sizeof(print_str_pool_item_t),PRINT_STR_POOL_ITEM_SIZE);
     ptThis = s_ptFreeList;
     s_ptFreeList = s_ptFreeList->ptNext;
     this.ptNext = NULL;
