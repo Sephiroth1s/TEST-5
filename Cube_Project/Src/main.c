@@ -20,7 +20,8 @@
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
 
-    //! 消息处理函数
+EXTERN_POOL()
+ 
 typedef struct {
     uint8_t chState;
     print_str_t *ptPrintString;
