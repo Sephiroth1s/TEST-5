@@ -61,7 +61,7 @@ static void msg_duck_handler(msg_t *ptMSG);
 static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE];
 static byte_queue_t s_tFIFOin, s_tFIFOout;
 
-static event_t s_tPrintWorld, s_tPrintApple, s_tPrintOrange;
+static event_t s_tPrintWorld, s_tPrintApple, s_tPrintOrange, s_tCatHandlerEvent, s_tDogHandlerEvent, s_tDuckHandlerEvent;
 
 static check_hello_pcb_t s_tCheckHelloPCB;
 static check_apple_pcb_t s_tCheckApplePCB;
@@ -74,12 +74,15 @@ static fsm_rt_t task_print_orange(void);
 static fsm_rt_t task_world(void);
 static fsm_rt_t task_apple(void);
 static fsm_rt_t task_orange(void);
+static fsm_rt_t task_cat(void);
+static fsm_rt_t task_dog(void);
+static fsm_rt_t task_duck(void);
 
 static fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 
-static uint8_t s_chPrintStrPool[120] ALIGN(__alignof__(print_str_t));
+static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
 
@@ -125,6 +128,9 @@ int main(void)
     INIT_EVENT(&s_tPrintWorld, false, false);
     INIT_EVENT(&s_tPrintApple, false, false);
     INIT_EVENT(&s_tPrintOrange, false, false);
+    INIT_EVENT(&s_tCatHandlerEvent, false, false);
+    INIT_EVENT(&s_tDogHandlerEvent, false, false);
+    INIT_EVENT(&s_tDuckHandlerEvent, false, false);
     print_str_pool_add_heap(s_chPrintStrPool,UBOUND(s_chPrintStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
@@ -136,6 +142,9 @@ int main(void)
         task_print_world();
         task_print_apple();
         task_print_orange();
+        task_cat();
+        task_dog();
+        task_duck();
         task_check_use_peek(&s_tCheckWordsUsePeek);
         serial_in_task();
         serial_out_task();
@@ -143,21 +152,44 @@ int main(void)
 }
 
 static void msg_cat_handler(msg_t *ptMSG)
+{   
+    SET_EVENT(&s_tCatHandlerEvent);
+}
+
+
+static void msg_dog_handler(msg_t *ptMSG)
 {
-    cat_handler_pcb_t *ptThis = (cat_handler_pcb_t *)ptMSG->pTarget;
-    enum {
+    SET_EVENT(&s_tDogHandlerEvent);  
+}
+
+static void msg_duck_handler(msg_t *ptMSG)
+{
+    SET_EVENT(&s_tDuckHandlerEvent);   
+}
+
+fsm_rt_t task_cat(void) 
+{
+    static print_str_t *s_ptPrintString;
+    static enum {
         START,
         INIT,
         WAIT_PRINT,
         PRINT_CAT
-    }; 
-    switch (this.chState) {
+    } s_tState = START;
+    switch (s_tState) {
         case START:
-            this.chState = INIT;
+            s_tState = WAIT_PRINT;
             //break;
+        case WAIT_PRINT:
+            if (WAIT_EVENT(&s_tCatHandlerEvent)) {
+                s_tState = INIT;
+                //break;
+            } else {
+                break;
+            }
         case INIT:
-            this.ptPrintString = print_str_pool_allocate();
-            if (this.ptPrintString == NULL) {
+            s_ptPrintString = print_str_pool_allocate();
+            if (s_ptPrintString == NULL) {
                 break;
             }
             do {
@@ -166,40 +198,47 @@ static void msg_cat_handler(msg_t *ptMSG)
                     &s_tFIFOout,
                     &enqueue_byte
                 };
-                print_string_init(this.ptPrintString, &c_tCFG);
+                print_string_init(s_ptPrintString, &c_tCFG);
             } while (0);
-            this.chState = PRINT_CAT;
+            s_tState = PRINT_CAT;
             // break;
         case PRINT_CAT:
-        GOTO_PRINT_CAT:
-            if (fsm_rt_cpl == print_string(this.ptPrintString)) {
-                print_str_pool_free(this.ptPrintString);
-                TASK_REENTER_RESET_FSM();
-            }else{
-                goto GOTO_PRINT_CAT;
+            if (fsm_rt_cpl == print_string(s_ptPrintString)) {
+                print_str_pool_free(s_ptPrintString);
+                RESET_EVENT(&s_tCatHandlerEvent);
+                TASK_RESET_FSM();
+                return fsm_rt_cpl;
             }
             break;
         default:
+            return fsm_rt_err;
             break;
     }
+    return fsm_rt_on_going;
 }
-
-static void msg_dog_handler(msg_t *ptMSG)
+fsm_rt_t task_dog(void) 
 {
-    dog_handler_pcb_t *ptThis = (dog_handler_pcb_t *)ptMSG->pTarget;
-    enum {
+    static print_str_t *s_ptPrintString;
+    static enum {
         START,
         INIT,
         WAIT_PRINT,
         PRINT_DOG
-    };
-    switch (this.chState) {
+    } s_tState = START;
+    switch (s_tState) {
         case START:
-            this.chState = INIT;
+            s_tState = WAIT_PRINT;
             //break;
+        case WAIT_PRINT:
+            if (WAIT_EVENT(&s_tDogHandlerEvent)) {
+                s_tState = INIT;
+                //break;
+            } else {
+                break;
+            }
         case INIT:
-            this.ptPrintString = print_str_pool_allocate();
-            if (this.ptPrintString == NULL) {
+            s_ptPrintString = print_str_pool_allocate();
+            if (s_ptPrintString == NULL) {
                 break;
             }
             do {
@@ -208,40 +247,47 @@ static void msg_dog_handler(msg_t *ptMSG)
                     &s_tFIFOout,
                     &enqueue_byte
                 };
-                print_string_init(this.ptPrintString, &c_tCFG);
+                print_string_init(s_ptPrintString, &c_tCFG);
             } while (0);
-            this.chState = PRINT_DOG;
+            s_tState = PRINT_DOG;
             // break;
         case PRINT_DOG:
-        GOTO_PRINT_DOG:
-            if (fsm_rt_cpl == print_string(this.ptPrintString)) {
-                print_str_pool_free(this.ptPrintString);
-                TASK_REENTER_RESET_FSM();
-            } else {
-                goto GOTO_PRINT_DOG;
+            if (fsm_rt_cpl == print_string(s_ptPrintString)) {
+                print_str_pool_free(s_ptPrintString);
+                RESET_EVENT(&s_tDogHandlerEvent);
+                TASK_RESET_FSM();
+                return fsm_rt_cpl;
             }
             break;
         default:
+            return fsm_rt_err;
             break;
     }
+    return fsm_rt_on_going;
 }
-
-static void msg_duck_handler(msg_t *ptMSG)
+fsm_rt_t task_duck(void) 
 {
-    duck_handler_pcb_t *ptThis = (duck_handler_pcb_t *)ptMSG->pTarget;
-    enum {
+    static print_str_t *s_ptPrintString;
+    static enum {
         START,
         INIT,
         WAIT_PRINT,
-        PRINT_DUCK 
-    };
-    switch (this.chState) {
+        PRINT_DUCK
+    } s_tState = START;
+    switch (s_tState) {
         case START:
-            this.chState = INIT;
+            s_tState = WAIT_PRINT;
             //break;
+        case WAIT_PRINT:
+            if (WAIT_EVENT(&s_tDuckHandlerEvent)) {
+                s_tState = INIT;
+                //break;
+            } else {
+                break;
+            }
         case INIT:
-            this.ptPrintString = print_str_pool_allocate();
-            if (this.ptPrintString == NULL) {
+            s_ptPrintString = print_str_pool_allocate();
+            if (s_ptPrintString == NULL) {
                 break;
             }
             do {
@@ -250,22 +296,23 @@ static void msg_duck_handler(msg_t *ptMSG)
                     &s_tFIFOout,
                     &enqueue_byte
                 };
-                print_string_init(this.ptPrintString, &c_tCFG);
+                print_string_init(s_ptPrintString, &c_tCFG);
             } while (0);
-            this.chState = PRINT_DUCK;
+            s_tState = PRINT_DUCK;
             // break;
         case PRINT_DUCK:
-        GOTO_PRINT_DUCK:
-            if (fsm_rt_cpl == print_string(this.ptPrintString)) {
-                print_str_pool_free(this.ptPrintString);
-                TASK_REENTER_RESET_FSM();
-            } else {
-                goto GOTO_PRINT_DUCK;
+            if (fsm_rt_cpl == print_string(s_ptPrintString)) {
+                print_str_pool_free(s_ptPrintString);
+                RESET_EVENT(&s_tDuckHandlerEvent);
+                TASK_RESET_FSM();
+                return fsm_rt_cpl;
             }
             break;
         default:
+            return fsm_rt_err;
             break;
     }
+    return fsm_rt_on_going;
 }
 
 static fsm_rt_t task_print_world(void)

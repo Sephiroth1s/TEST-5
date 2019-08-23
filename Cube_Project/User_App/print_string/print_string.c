@@ -90,16 +90,16 @@ void print_str_pool_item_init(void)
     s_ptFreeList = NULL;
 }
 
-bool print_str_pool_add_heap(void *pTartget, uint16_t hwSize)
+bool print_str_pool_add_heap(uint8_t *pTartget, uint16_t hwSize)
 {
-    uint8_t *ptThis = (uint8_t *)pTartget;
-    if ((NULL == pTartget) || (hwSize < sizeof(print_str_pool_item_t))) {
-        printf("memory block is too small, please at least %d\r\n", sizeof(print_str_pool_item_t));
+    uint_fast8_t *ptThis = (uint_fast8_t *)pTartget;
+    hwSize = hwSize / sizeof(uint_fast8_t);
+    if ((NULL == pTartget) || (hwSize < PRINT_STR_POOL_ITEM_SIZE)) {
         return false;
     } else {
-        for (uint16_t hwSizeCounter = hwSize; sizeof(print_str_pool_item_t) < hwSizeCounter; hwSizeCounter -= sizeof(print_str_pool_item_t)) {
+        for (uint16_t hwSizeCounter = hwSize; PRINT_STR_POOL_ITEM_SIZE < hwSizeCounter; hwSizeCounter -= PRINT_STR_POOL_ITEM_SIZE) {
             print_str_pool_push((print_str_pool_item_t *)ptThis);
-            ptThis = ptThis + sizeof(print_str_pool_item_t);
+            ptThis = ptThis + PRINT_STR_POOL_ITEM_SIZE;
         }
         return true;
     }
