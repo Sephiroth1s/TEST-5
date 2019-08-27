@@ -468,6 +468,11 @@
               <FileType>1</FileType>
               <FilePath>..\User_App\msg_map\msg_map.c</FilePath>
             </File>
+            <File>
+              <FileName>t_pool.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User_App\t_pool\t_pool.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

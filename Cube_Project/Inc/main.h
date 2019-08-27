@@ -40,6 +40,7 @@ extern "C" {
 #include "../User_App/print_string/print_string.h"
 #include "../User_App/check_use_peek/check_use_peek.h"
 #include "../User_App/msg_map/msg_map.h"
+#include "../User_App/t_pool/t_pool.h"
 #ifdef __cplusplus
 }
 #endif

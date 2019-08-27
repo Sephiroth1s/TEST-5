@@ -20,9 +20,8 @@
 #error No defined macro PRINT_STR_OUTPUT_BYTE(__BYTE) for output byte, please define one with prototype bool (*)(uint8_t chByte);
 #endif
 #endif
-
-static print_str_pool_item_t *s_ptFreeList = NULL;
-
+// static print_str_pool_item_t *s_ptFreeList = NULL;
+IMPLEMENT_POOL(print_str, print_str_t);
 bool print_string_init(print_str_t *ptThis, const print_str_cfg_t *ptCFG)
 {
     enum {
@@ -85,47 +84,47 @@ fsm_rt_t print_string(print_str_t *ptThis)
     return fsm_rt_on_going;
 }
 
-void print_str_pool_item_init(void)
-{
-    s_ptFreeList = NULL;
-}
+// void print_str_pool_item_init(void)
+// {
+//     s_ptFreeList = NULL;
+// }
 
-bool print_str_pool_add_heap(uint8_t *pTartget, uint16_t hwSize)
-{
-    uint_fast8_t *ptThis = (uint_fast8_t *)pTartget;
-    hwSize = hwSize / sizeof(uint_fast8_t);
-    if ((NULL == pTartget) || (hwSize < PRINT_STR_POOL_ITEM_SIZE)) {
-        return false;
-    } else {
-        for (uint16_t hwSizeCounter = hwSize; PRINT_STR_POOL_ITEM_SIZE < hwSizeCounter; hwSizeCounter -= PRINT_STR_POOL_ITEM_SIZE) {
-            print_str_pool_push((print_str_pool_item_t *)ptThis);
-            ptThis = ptThis + PRINT_STR_POOL_ITEM_SIZE;
-        }
-        return true;
-    }
-}
+// bool print_str_pool_add_heap(uint8_t *pTartget, uint16_t hwSize)
+// {
+//     uint_fast8_t *ptThis = (uint_fast8_t *)pTartget;
+//     hwSize = hwSize / sizeof(uint_fast8_t);
+//     if ((NULL == pTartget) || (hwSize < PRINT_STR_POOL_ITEM_SIZE)) {
+//         return false;
+//     } else {
+//         for (uint16_t hwSizeCounter = hwSize; PRINT_STR_POOL_ITEM_SIZE < hwSizeCounter; hwSizeCounter -= PRINT_STR_POOL_ITEM_SIZE) {
+//             print_str_pool_push((print_str_pool_item_t *)ptThis);
+//             ptThis = ptThis + PRINT_STR_POOL_ITEM_SIZE;
+//         }
+//         return true;
+//     }
+// }
 
-print_str_t *print_str_pool_allocate(void)
-{
-    print_str_pool_item_t *ptThis;
-    if (NULL == s_ptFreeList) {
-        return NULL;
-    }
-    ptThis = s_ptFreeList;
-    s_ptFreeList = s_ptFreeList->ptNext;
-    this.ptNext = NULL;
-    return (print_str_t *)this.chBuffer;
-}
+// print_str_t *print_str_pool_allocate(void)
+// {
+//     print_str_pool_item_t *ptThis;
+//     if (NULL == s_ptFreeList) {
+//         return NULL;
+//     }
+//     ptThis = s_ptFreeList;
+//     s_ptFreeList = s_ptFreeList->ptNext;
+//     this.ptNext = NULL;
+//     return (print_str_t *)this.chBuffer;
+// }
 
-void print_str_pool_free(print_str_t *ptItem)
-{
-    if (ptItem != NULL) {
-        print_str_pool_push((print_str_pool_item_t *)ptItem);
-    }
-}
+// void print_str_pool_free(print_str_t *ptItem)
+// {
+//     if (ptItem != NULL) {
+//         print_str_pool_push((print_str_pool_item_t *)ptItem);
+//     }
+// }
 
-void print_str_pool_push(print_str_pool_item_t *ptThis)  //入栈
-{
-    this.ptNext = s_ptFreeList;
-    s_ptFreeList = ptThis;
-}
+// void print_str_pool_push(print_str_pool_item_t *ptThis)  //入栈
+// {
+//     this.ptNext = s_ptFreeList;
+//     s_ptFreeList = ptThis;
+// }
