@@ -65,14 +65,16 @@
         hwSize = hwSize / sizeof(uint_fast8_t);                             \
         if ((NULL == pTarget) ||                                            \
             (hwSize < PRINT_STR_POOL_ITEM_SIZE(__TYPE))) {                  \
+            printf("heap too small\r\n");                                   \
             return false;                                                   \
         } else {                                                            \
             for (uint16_t hwSizeCounter = hwSize;                           \
                  PRINT_STR_POOL_ITEM_SIZE(__TYPE) < hwSizeCounter;          \
                  hwSizeCounter -= PRINT_STR_POOL_ITEM_SIZE(__TYPE)) {       \
-                 printf("before push:%p\t%p\r\n", ptPool, ptThis);\
+                ptPool = (__NAME##_pool_item_t *)2;                         \
+                printf("before push:%p\t%p\r\n", ptPool, ptThis);           \
                 __NAME##_pool_push(ptPool, (__NAME##_pool_item_t *)ptThis); \
-                printf("add_heap_for:%p\t%p\r\n", ptPool, ptThis);                       \
+                printf("add_heap_for:%p\t%p\r\n", ptPool, ptThis);          \
                 ptThis = ptThis + PRINT_STR_POOL_ITEM_SIZE(__TYPE);         \
             }                                                               \
             printf("for cpl%p\t%p\r\n", ptPool, ptThis);                    \
@@ -91,7 +93,7 @@
                             __NAME##_pool_item_t *ptThis)                   \
     {                                                                       \
         ptThis->ptNext = ptPool;                                            \
-        printf("push:%p\t%p\r\n", ptPool, ptThis);                               \
+        printf("push:%p\t%p\t%p\r\n", ptPool, ptThis, ptThis->ptNext);      \
         ptPool = ptThis;                                                    \
     }
 

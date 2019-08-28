@@ -21,7 +21,7 @@
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
 
-static POOL(print_str) *s_tFreeList = NULL;
+static POOL(print_str) *s_tFreeList = (POOL(print_str) *)1;
 
 typedef struct {
     uint8_t chState;
