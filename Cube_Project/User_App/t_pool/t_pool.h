@@ -6,16 +6,16 @@
 /*============================ INCLUDES ======================================*/
 /*============================ MACROS ========================================*/
 /*============================ MACROFIED FUNCTIONS ===========================*/
-#define POOL_INIT(__NAME, __POOL)                                      \
+#define POOL_INIT(__NAME, __POOL)                                            \
     __NAME##_pool_init((__POOL))
 
-#define POOL_ALLOCATE(__NAME, __POOL)                                       \
+#define POOL_ALLOCATE(__NAME, __POOL)                                        \
     __NAME##_pool_allocate((__POOL))
 
-#define POOL_FREE(__NAME, __POOL, __ITEM)                                   \
+#define POOL_FREE(__NAME, __POOL, __ITEM)                                    \
     __NAME##_pool_free((__POOL), (__ITEM))
 
-#define POOL_ADD_HEAP(__NAME, __POOL, __BUFFER, __SIZE)                     \
+#define POOL_ADD_HEAP(__NAME, __POOL, __BUFFER, __SIZE)                      \
     __NAME##_pool_add_heap((__POOL), (__BUFFER), (__SIZE))
 
 #define POOL(__NAME) __NAME##_pool_t
@@ -34,7 +34,7 @@
 
 #define DEF_POOL(__NAME, __TYPE)                                             \
     union __NAME##_pool_item_t {                                             \
-        uint_fast8_t ptBuffer[PRINT_STR_POOL_ITEM_SIZE(__TYPE)];             \
+        __TYPE tItem;             \
         __NAME##_pool_item_t *ptNext;                                        \
     } ALIGN(__alignof__(__TYPE));                                            \
     struct __NAME##_pool_t {                                                 \
@@ -61,7 +61,7 @@
         ptItem = ptPool->ptFreeList;                                         \
         ptPool = (__NAME##_pool_t *)ptItem->ptNext;                          \
         ptItem->ptNext = NULL;                                               \
-        return (__TYPE *)ptItem->ptBuffer;                                   \
+        return (__TYPE *)ptItem->tItem;                                      \
     }                                                                        \
                                                                              \
     bool __NAME##_pool_add_heap(__NAME##_pool_t *ptPool, uint8_t *pTarget,   \
