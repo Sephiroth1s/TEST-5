@@ -44,6 +44,3 @@ DEF_POOL(print_str, print_str_t);
 extern fsm_rt_t print_string(print_str_t *ptThis);
 extern bool print_string_init(print_str_t *ptThis, const print_str_cfg_t *ptCFG);
 #endif
-
-   
-   

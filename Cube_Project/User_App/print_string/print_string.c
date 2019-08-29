@@ -20,7 +20,6 @@
 #error No defined macro PRINT_STR_OUTPUT_BYTE(__BYTE) for output byte, please define one with prototype bool (*)(uint8_t chByte);
 #endif
 #endif
-// static print_str_pool_item_t *s_ptFreeList = NULL;
 IMPLEMENT_POOL(print_str, print_str_t);
 bool print_string_init(print_str_t *ptThis, const print_str_cfg_t *ptCFG)
 {
