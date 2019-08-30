@@ -18,7 +18,7 @@
     } while (0);
 
 // check_* only used in peek
-bool check_msg_map_init(check_msg_map_t *ptThis, check_msg_map_cfg_t *ptCFG)
+bool check_msg_map_init(check_msg_map_t *ptThis, check_msg_map_cfg_t *ptCFG);
 {
     enum {
         START

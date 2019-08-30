@@ -21,7 +21,8 @@
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
 
-static POOL(print_str) s_tFreeList;
+static POOL(print_str) s_tPrintFreeList;
+static POOL(check_str) s_tCheckFreeList;
 
 typedef struct {
     uint8_t chState;
@@ -40,17 +41,17 @@ typedef struct {
 
 typedef struct {
     uint8_t chState;
-    check_str_t tCheckHello;
+    check_str_t *tCheckHello;
 } check_hello_pcb_t;
 
 typedef struct {
     uint8_t chState;
-    check_str_t tCheckOrange;
+    check_str_t *tCheckOrange;
 } check_orange_pcb_t;
 
 typedef struct {
     uint8_t chState;
-    check_str_t tCheckApple;
+    check_str_t *tCheckApple;
 } check_apple_pcb_t;
 
 static cat_handler_pcb_t s_tCatHandlerPCB;
@@ -85,6 +86,7 @@ static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte, 
 static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 
 static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
+static uint8_t s_chCheckStrPool[256] ALIGN(__alignof__(check_str_t));
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
 
@@ -126,14 +128,16 @@ int main(void)
     static check_use_peek_t s_tCheckWordsUsePeek;
 
     system_init();
-    POOL_INIT(print_str, &s_tFreeList);
+    POOL_INIT(print_str, &s_tPrintFreeList);
+    POOL_INIT(check_str, &s_tCheckFreeList);
     INIT_EVENT(&s_tPrintWorld, false, false);
     INIT_EVENT(&s_tPrintApple, false, false);
     INIT_EVENT(&s_tPrintOrange, false, false);
     INIT_EVENT(&s_tCatHandlerEvent, false, false);
     INIT_EVENT(&s_tDogHandlerEvent, false, false);
     INIT_EVENT(&s_tDuckHandlerEvent, false, false);
-    POOL_ADD_HEAP(print_str, &s_tFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
+    POOL_ADD_HEAP(print_str, &s_tPrintFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
+    POOL_ADD_HEAP(check_str, &s_tCheckFreeList, s_chCheckStrPool, UBOUND(s_chCheckStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
     check_msg_map_init(&s_tCheckMSGMap, &c_tCheckMSGMapCFG);
@@ -190,7 +194,7 @@ fsm_rt_t task_cat(void)
                 break;
             }
         case INIT:
-            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tFreeList);
+            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tPrintFreeList);
             if (s_ptPrintString == NULL) {
                 printf("cat allocate null");
                 break;
@@ -207,7 +211,7 @@ fsm_rt_t task_cat(void)
             // break;
         case PRINT_CAT:
             if (fsm_rt_cpl == print_string(s_ptPrintString)) {
-                POOL_FREE(print_str, &s_tFreeList, s_ptPrintString);
+                POOL_FREE(print_str, &s_tPrintFreeList, s_ptPrintString);
                 RESET_EVENT(&s_tCatHandlerEvent);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
@@ -240,7 +244,7 @@ fsm_rt_t task_dog(void)
                 break;
             }
         case INIT:
-            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tFreeList);
+            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tPrintFreeList);
             if (s_ptPrintString == NULL) {
                 break;
             }
@@ -256,7 +260,7 @@ fsm_rt_t task_dog(void)
             // break;
         case PRINT_DOG:
             if (fsm_rt_cpl == print_string(s_ptPrintString)) {
-                POOL_FREE(print_str,&s_tFreeList,s_ptPrintString);
+                POOL_FREE(print_str,&s_tPrintFreeList,s_ptPrintString);
                 RESET_EVENT(&s_tDogHandlerEvent);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
@@ -289,7 +293,7 @@ fsm_rt_t task_duck(void)
                 break;
             }
         case INIT:
-            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tFreeList);
+            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tPrintFreeList);
             if (s_ptPrintString == NULL) {
                 break;
             }
@@ -305,7 +309,7 @@ fsm_rt_t task_duck(void)
             // break;
         case PRINT_DUCK:
             if (fsm_rt_cpl == print_string(s_ptPrintString)) {
-                POOL_FREE(print_str,&s_tFreeList,s_ptPrintString);
+                POOL_FREE(print_str,&s_tPrintFreeList,s_ptPrintString);
                 RESET_EVENT(&s_tDuckHandlerEvent);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
@@ -362,7 +366,7 @@ static fsm_rt_t task_world(void)
                 break;
             }
         case INIT:
-            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tFreeList);
+            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tPrintFreeList);
             if (s_ptPrintString == NULL) {
                 break;
             }
@@ -378,7 +382,7 @@ static fsm_rt_t task_world(void)
             // break;
         case PRINT_WORLD:
             if (fsm_rt_cpl == print_string(s_ptPrintString)) {
-                POOL_FREE(print_str,&s_tFreeList,s_ptPrintString);
+                POOL_FREE(print_str,&s_tPrintFreeList,s_ptPrintString);
                 RESET_EVENT(&s_tPrintWorld);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
@@ -435,7 +439,7 @@ static fsm_rt_t task_apple(void)
                 break;
             }
         case INIT:
-            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tFreeList);
+            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tPrintFreeList);
             if (s_ptPrintString == NULL) {
                 break;
             }
@@ -451,7 +455,7 @@ static fsm_rt_t task_apple(void)
             // break;
         case PRINT_APPLE:
             if (fsm_rt_cpl == print_string(s_ptPrintString)) {
-                POOL_FREE(print_str,&s_tFreeList,s_ptPrintString);
+                POOL_FREE(print_str,&s_tPrintFreeList,s_ptPrintString);
                 RESET_EVENT(&s_tPrintApple);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
@@ -508,7 +512,7 @@ static fsm_rt_t task_orange(void)
                 break;
             }
         case INIT:
-            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tFreeList);
+            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tPrintFreeList);
             if (s_ptPrintString == NULL) {
                 break;
             }
@@ -524,7 +528,7 @@ static fsm_rt_t task_orange(void)
             // break;
         case PRINT_ORANGE:
             if (fsm_rt_cpl == print_string(s_ptPrintString)) {
-                POOL_FREE(print_str,&s_tFreeList,s_ptPrintString);
+                POOL_FREE(print_str,&s_tPrintFreeList,s_ptPrintString);
                 RESET_EVENT(&s_tPrintOrange);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
@@ -546,22 +550,29 @@ fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *p
     };
     switch (this.chState) {
         case START:
+            this.tCheckHello = POOL_ALLOCATE(check_str, &s_tCheckFreeList);
+            if (this.tCheckHello == NULL) {
+                printf("check allocate fault\r\n");
+                break;
+            }
             do {
                 const check_str_cfg_t c_tCFG = {
                     "hello",
                     ptReadByte
                 };
-                check_string_init(&this.tCheckHello, &c_tCFG);
+                check_string_init(this.tCheckHello, &c_tCFG);
             } while (0);
             this.chState = CHECK_STRING;
             // break;
         case CHECK_STRING:
             *pbRequestDrop = false;
-            if (fsm_rt_cpl == check_string(&this.tCheckHello, pbRequestDrop)) {
+            if (fsm_rt_cpl == check_string(this.tCheckHello, pbRequestDrop)) {
                 SET_EVENT(&s_tPrintWorld);
                 TASK_CHECK_RESET_FSM();
+                printf("check hello cpl\r\n");
                 return fsm_rt_cpl;
             }
+            POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckHello);
             break;
         default:
             return fsm_rt_err;
@@ -579,22 +590,27 @@ static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte, 
     };
     switch (this.chState) {
         case START:
+            this.tCheckApple = POOL_ALLOCATE(check_str, &s_tCheckFreeList);
+            if (this.tCheckApple == NULL) {
+                break;
+            }
             do {
                 const check_str_cfg_t c_tCFG = {
                     "apple",
                     ptReadByte
                 };
-                check_string_init(&this.tCheckApple, &c_tCFG);
+                check_string_init(this.tCheckApple, &c_tCFG);
             } while (0);
             this.chState = CHECK_STRING;
             // break;
         case CHECK_STRING:
             *pbRequestDrop = false;
-            if (fsm_rt_cpl == check_string(&this.tCheckApple, pbRequestDrop)) {
+            if (fsm_rt_cpl == check_string(this.tCheckApple, pbRequestDrop)) {
                 SET_EVENT(&s_tPrintApple);
                 TASK_CHECK_RESET_FSM();
                 return fsm_rt_cpl;
             }
+            POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckApple);
             break;
         default:
             return fsm_rt_err;
@@ -612,22 +628,27 @@ static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte,
     };
     switch (this.chState) {
         case START:
+            this.tCheckOrange = POOL_ALLOCATE(check_str, &s_tCheckFreeList);
+            if (this.tCheckOrange == NULL) {
+                break;
+            }
             do {
                 const check_str_cfg_t c_tCFG = {
                     "orange",
                     ptReadByte
                 };
-                check_string_init(&this.tCheckOrange, &c_tCFG);
+                check_string_init(this.tCheckOrange, &c_tCFG);
             } while (0);
             this.chState = CHECK_STRING;
             // break;
         case CHECK_STRING:
             *pbRequestDrop = false;
-            if (fsm_rt_cpl == check_string(&this.tCheckOrange, pbRequestDrop)) {
+            if (fsm_rt_cpl == check_string(this.tCheckOrange, pbRequestDrop)) {
                 SET_EVENT(&s_tPrintOrange);
                 TASK_CHECK_RESET_FSM();
                 return fsm_rt_cpl;
             }
+            POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckOrange);
             break;
         default:
             return fsm_rt_err;

@@ -3,6 +3,7 @@
 #define __CHECK_STRING_H__
 #include <stdint.h>
 #include <stdbool.h>
+#include "../t_pool/t_pool.h"
 
 typedef bool read_byte_t(void *, uint8_t *);
 typedef struct read_byte_evt_handler_t read_byte_evt_handler_t;
@@ -23,6 +24,9 @@ typedef struct {
     uint8_t *pchString;
     read_byte_evt_handler_t *ptReadByteEvent;
 } check_str_cfg_t;
+
+DECLARE_POOL(check_str, check_str_t);
+DEF_POOL(check_str, check_str_t);
 
 extern fsm_rt_t check_string(check_str_t *ptThis, bool *pbIsRequestDrop);
 extern bool check_string_init(check_str_t *ptThis, const check_str_cfg_t *ptCFG);
