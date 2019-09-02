@@ -22,7 +22,7 @@
 #define OUTPUT_FIFO_SIZE 100
 
 static POOL(print_str) s_tPrintFreeList;
-static POOL(check_str) s_tCheckFreeList;
+extern POOL(check_str) s_tCheckFreeList;
 
 typedef struct {
     uint8_t chState;
@@ -555,6 +555,7 @@ fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *p
                 printf("check allocate fault\r\n");
                 break;
             }
+            printf("this.checkHello:%p\r\n",this.tCheckHello);
             do {
                 const check_str_cfg_t c_tCFG = {
                     "hello",
@@ -570,6 +571,7 @@ fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *p
                 SET_EVENT(&s_tPrintWorld);
                 TASK_CHECK_RESET_FSM();
                 printf("check hello cpl\r\n");
+                POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckHello);
                 return fsm_rt_cpl;
             }
             POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckHello);
@@ -594,6 +596,7 @@ static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte, 
             if (this.tCheckApple == NULL) {
                 break;
             }
+            printf("this.tCheckApple:%p\r\n",this.tCheckApple);
             do {
                 const check_str_cfg_t c_tCFG = {
                     "apple",
@@ -608,6 +611,7 @@ static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte, 
             if (fsm_rt_cpl == check_string(this.tCheckApple, pbRequestDrop)) {
                 SET_EVENT(&s_tPrintApple);
                 TASK_CHECK_RESET_FSM();
+                POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckApple);
                 return fsm_rt_cpl;
             }
             POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckApple);
@@ -632,6 +636,7 @@ static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte,
             if (this.tCheckOrange == NULL) {
                 break;
             }
+            printf("this.tCheckOrange:%p\r\n",this.tCheckOrange);
             do {
                 const check_str_cfg_t c_tCFG = {
                     "orange",
@@ -646,6 +651,7 @@ static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte,
             if (fsm_rt_cpl == check_string(this.tCheckOrange, pbRequestDrop)) {
                 SET_EVENT(&s_tPrintOrange);
                 TASK_CHECK_RESET_FSM();
+                POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckOrange);
                 return fsm_rt_cpl;
             }
             POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckOrange);

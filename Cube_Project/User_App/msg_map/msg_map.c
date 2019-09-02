@@ -5,8 +5,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include "../t_pool/t_pool.h"
 
 #define this (*ptThis)
+POOL(check_str) s_tCheckFreeList;
 #define TASK_RESET_FSM()      \
     do {                      \
         this.chState = START; \
@@ -18,7 +20,7 @@
     } while (0);
 
 // check_* only used in peek
-bool check_msg_map_init(check_msg_map_t *ptThis, check_msg_map_cfg_t *ptCFG);
+bool check_msg_map_init(check_msg_map_t *ptThis, check_msg_map_cfg_t *ptCFG)
 {
     enum {
         START
@@ -56,20 +58,23 @@ fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool 
             // break;
         case INIT_CHECK_MSG:
             do {
+                this.tCheckMSG = POOL_ALLOCATE(check_str, &s_tCheckFreeList);
                 this.bIsRequestDrop = false;
                 RESET_PEEK_BYTE(this.ptQueue);
                 const check_str_cfg_t c_tCheckMSGCFG = {(this.ptMSGMap[this.chMSGCount]).pchMessage,ptReadByte};
-                check_string_init(&this.tCheckMSG, &c_tCheckMSGCFG);
+                check_string_init(this.tCheckMSG, &c_tCheckMSGCFG);
             } while (0);
             this.chState = CHECK_MSG;
             //break;
         case CHECK_MSG:
             *pbRequestDrop = false;
-            if (fsm_rt_cpl == check_string(&this.tCheckMSG, &this.bIsRequestDrop)) {
+            if (fsm_rt_cpl == check_string(this.tCheckMSG, &this.bIsRequestDrop)) {
                 this.chState = MSG_HANLDER;
+                POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckMSG);
                 goto GOTO_MSG_HANLDER;
                 break;
             }
+            POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckMSG);
             if (this.bIsRequestDrop) {
                 this.chVoteDropCount++;
                 this.bIsRequestDrop = false;

@@ -5,6 +5,7 @@
 #include "../check_string/check_string.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include "../t_pool/t_pool.h"
 
 typedef struct _msg_t msg_t;
 //! 消息的处理函数
@@ -20,24 +21,6 @@ typedef struct {
     uint8_t chMSGNumber;
     byte_queue_t *ptQueue;
     msg_t *ptMSGMap;
-} search_msg_map_cfg_t;
-
-typedef struct {
-    uint8_t chState;
-    uint8_t chMSGNumber;
-    uint8_t chVoteDropCount;
-    uint8_t chMSGCount;
-    bool bIsRequestDrop;
-    byte_queue_t *ptQueue;
-    read_byte_evt_handler_t tReadByteEvent;
-    check_str_t tCheckMSG;
-    msg_t *ptMSGMap;
-} search_msg_map_t;
-
-typedef struct {
-    uint8_t chMSGNumber;
-    byte_queue_t *ptQueue;
-    msg_t *ptMSGMap;
 } check_msg_map_cfg_t;
 
 typedef struct {
@@ -47,7 +30,7 @@ typedef struct {
     uint8_t chMSGCount;
     bool bIsRequestDrop;
     byte_queue_t *ptQueue;
-    check_str_t tCheckMSG;
+    check_str_t *tCheckMSG;
     msg_t *ptMSGMap;
 } check_msg_map_t;
 
