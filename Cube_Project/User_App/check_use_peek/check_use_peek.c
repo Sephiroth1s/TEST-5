@@ -55,6 +55,7 @@ fsm_rt_t task_check_use_peek(check_use_peek_t *ptThis)
                                         this.ptAgents[this.chWordsCount].pTarget,
                                         &this.tReadByte, 
                                         &bIsRequestDrop)) {
+                    printf("peek_cpl\r\n");
                     GET_ALL_PEEKED_BYTE(this.ptQueue);
                     TASK_RESET_FSM();
                     return fsm_rt_cpl;

@@ -117,10 +117,7 @@ int main(void)
     static check_msg_map_t s_tCheckMSGMap;
 
     static const check_agent_t c_tCheckWordsAgent[] = {
-                                {&s_tCheckHelloPCB, check_hello},
-                                {&s_tCheckApplePCB, check_apple},
-                                {&s_tCheckOrangePCB, check_orange},
-                                {&s_tCheckMSGMap, check_msg_map}};
+                                {&s_tCheckHelloPCB, check_hello}};
     static const check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
                                         UBOUND(c_tCheckWordsAgent),
                                         &s_tFIFOin,
@@ -142,6 +139,11 @@ int main(void)
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
     check_msg_map_init(&s_tCheckMSGMap, &c_tCheckMSGMapCFG);
     check_use_peek_init(&s_tCheckWordsUsePeek, &c_tCheckWordsUsePeekCFG);
+    ENQUEUE_BYTE(&s_tFIFOin, 'h');
+    ENQUEUE_BYTE(&s_tFIFOin, 'e');
+    ENQUEUE_BYTE(&s_tFIFOin, 'l');
+    ENQUEUE_BYTE(&s_tFIFOin, 'l');
+    ENQUEUE_BYTE(&s_tFIFOin, 'o');
     LED1_OFF();
     while (1) {
         breath_led();

@@ -51,26 +51,31 @@ fsm_rt_t check_string(check_str_t *ptThis, bool *pbIsRequestDrop)
                 return fsm_rt_cpl;
             } else {
                 this.chState = READ_CHAR;
+                printf("no check char end\r\n");
             }
             // break;
         case READ_CHAR:
+            printf("readchar-\r\n");
             if (this.ptReadByteEvent->fnReadByte(this.ptReadByteEvent->pTarget, &this.chCurrentByte)) {
+                printf("read_char successful\r\n");
                 this.chState = CHECK_WORLD;
                 // break;
             } else {
+                printf("read char error\r\n");
                 TASK_STR_RESET_FSM();
                 break;
             }
         case CHECK_WORLD:
-        printf("pchString:%c\tchCurrentByte%c\r\n",*this.pchString,this.chCurrentByte);
+            printf("pchString:%c\tchCurrentByte%c\r\n",*this.pchString,this.chCurrentByte);
             if (*this.pchString == this.chCurrentByte) {
-                printf("pchString:%c\tchCurrentByte%c\r\n",*this.pchString,this.chCurrentByte);
+                printf("1pchString:%c\tchCurrentByte%c\r\n",*this.pchString,this.chCurrentByte);
                 this.pchString++;
                 this.chState = CHECK_END;
                 goto GOTO_CHECK_END;
             } else {
-                // printf("ptThis%p\r\n",ptThis);
-                // printf("pchString:%c\tchCurrentByte%c\r\n",*this.pchString,this.chCurrentByte);
+                printf("check char errot\r\n");
+                printf("check char errot ptThis%p\r\n",ptThis);
+                printf("3pchString:%c\tchCurrentByte%c\r\n",*this.pchString,this.chCurrentByte);
                 *pbIsRequestDrop = true;
                 TASK_STR_RESET_FSM();
                 break;

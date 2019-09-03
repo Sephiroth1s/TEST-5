@@ -74,8 +74,10 @@ bool init_byte_queue(byte_queue_t* ptThis, uint8_t* pchBuffer, uint16_t hwSize)
 bool peek_byte_queue(byte_queue_t* ptThis, uint8_t* pchByte)
 {
     if ((NULL == ptThis) || (NULL == pchByte) || (is_peek_byte_queue_empty(ptThis))) {
+        printf("peek_error\r\n");
         return false;
     }
+    printf("peek wait\r\n");
     *pchByte = this.pchBuffer[this.hwPeek];
     this.hwPeek++;
     if(this.hwPeek>=this.hwSize){
