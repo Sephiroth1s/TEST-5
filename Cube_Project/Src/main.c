@@ -41,17 +41,17 @@ typedef struct {
 
 typedef struct {
     uint8_t chState;
-    check_str_t *tCheckHello;
+    check_str_t tCheckHello;
 } check_hello_pcb_t;
 
 typedef struct {
     uint8_t chState;
-    check_str_t *tCheckOrange;
+    check_str_t tCheckOrange;
 } check_orange_pcb_t;
 
 typedef struct {
     uint8_t chState;
-    check_str_t *tCheckApple;
+    check_str_t tCheckApple;
 } check_apple_pcb_t;
 
 static cat_handler_pcb_t s_tCatHandlerPCB;
@@ -550,29 +550,22 @@ fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *p
     };
     switch (this.chState) {
         case START:
-            this.tCheckHello = POOL_ALLOCATE(check_str, &s_tCheckFreeList);
-            if (this.tCheckHello == NULL) {
-                printf("check allocate fault\r\n");
-                break;
-            }
             do {
                 const check_str_cfg_t c_tCFG = {
                     "hello",
                     ptReadByte
                 };
-                check_string_init(this.tCheckHello, &c_tCFG);
+                check_string_init(&this.tCheckHello, &c_tCFG);
             } while (0);
             this.chState = CHECK_STRING;
             // break;
         case CHECK_STRING:
             *pbRequestDrop = false;
-            if (fsm_rt_cpl == check_string(this.tCheckHello, pbRequestDrop)) {
+            if (fsm_rt_cpl == check_string(&this.tCheckHello, pbRequestDrop)) {
                 SET_EVENT(&s_tPrintWorld);
                 TASK_CHECK_RESET_FSM();
-                printf("check hello cpl\r\n");
                 return fsm_rt_cpl;
             }
-            POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckHello);
             break;
         default:
             return fsm_rt_err;
@@ -590,27 +583,22 @@ static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte, 
     };
     switch (this.chState) {
         case START:
-            this.tCheckApple = POOL_ALLOCATE(check_str, &s_tCheckFreeList);
-            if (this.tCheckApple == NULL) {
-                break;
-            }
             do {
                 const check_str_cfg_t c_tCFG = {
                     "apple",
                     ptReadByte
                 };
-                check_string_init(this.tCheckApple, &c_tCFG);
+                check_string_init(&this.tCheckApple, &c_tCFG);
             } while (0);
             this.chState = CHECK_STRING;
             // break;
         case CHECK_STRING:
             *pbRequestDrop = false;
-            if (fsm_rt_cpl == check_string(this.tCheckApple, pbRequestDrop)) {
+            if (fsm_rt_cpl == check_string(&this.tCheckApple, pbRequestDrop)) {
                 SET_EVENT(&s_tPrintApple);
                 TASK_CHECK_RESET_FSM();
                 return fsm_rt_cpl;
             }
-            POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckApple);
             break;
         default:
             return fsm_rt_err;
@@ -628,27 +616,22 @@ static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte,
     };
     switch (this.chState) {
         case START:
-            this.tCheckOrange = POOL_ALLOCATE(check_str, &s_tCheckFreeList);
-            if (this.tCheckOrange == NULL) {
-                break;
-            }
             do {
                 const check_str_cfg_t c_tCFG = {
                     "orange",
                     ptReadByte
                 };
-                check_string_init(this.tCheckOrange, &c_tCFG);
+                check_string_init(&this.tCheckOrange, &c_tCFG);
             } while (0);
             this.chState = CHECK_STRING;
             // break;
         case CHECK_STRING:
             *pbRequestDrop = false;
-            if (fsm_rt_cpl == check_string(this.tCheckOrange, pbRequestDrop)) {
+            if (fsm_rt_cpl == check_string(&this.tCheckOrange, pbRequestDrop)) {
                 SET_EVENT(&s_tPrintOrange);
                 TASK_CHECK_RESET_FSM();
                 return fsm_rt_cpl;
             }
-            POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckOrange);
             break;
         default:
             return fsm_rt_err;
