@@ -41,7 +41,6 @@
     };
 
 #define IMPLEMENT_POOL(__NAME, __TYPE)                                           \
-                                                                                 \
     bool __NAME##_pool_init(__NAME##_pool_t *ptPool)                             \
     {                                                                            \
         if (NULL == ptPool) {                                                    \
@@ -54,7 +53,7 @@
     __TYPE *__NAME##_pool_allocate(__NAME##_pool_t *ptPool)                      \
     {                                                                            \
         __NAME##_pool_item_t *ptItem;                                            \
-        if (NULL == ptPool) {                                                    \
+        if ((NULL == ptPool) || (NULL == ptPool->ptFreeList)) {                  \
             return NULL;                                                         \
         }                                                                        \
         ptItem = ptPool->ptFreeList;                                             \
@@ -68,11 +67,8 @@
     {                                                                            \
         uint_fast8_t *ptItem = (uint_fast8_t *)pTarget;                          \
         uint16_t hwTypeSize;                                                     \
-        if (!(sizeof(__TYPE) % sizeof(uint_fast8_t))) {                          \
-            hwTypeSize = sizeof(__TYPE) / sizeof(uint_fast8_t);                  \
-        } else {                                                                 \
-            hwTypeSize = sizeof(__TYPE) / sizeof(uint_fast8_t) + 1;              \
-        }                                                                        \
+        hwTypeSize = ((sizeof(__TYPE) + sizeof(uint_fast8_t) - 1) /              \
+                      sizeof(uint_fast8_t));                                     \
         if ((NULL == pTarget) || (hwSize < hwTypeSize)) {                        \
             return false;                                                        \
         } else {                                                                 \

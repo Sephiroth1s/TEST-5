@@ -26,21 +26,6 @@ static POOL(check_str) s_tCheckFreeList;
 
 typedef struct {
     uint8_t chState;
-    print_str_t *ptPrintString;
-}cat_handler_pcb_t;
-
-typedef struct {
-    uint8_t chState;
-    print_str_t *ptPrintString;
-}dog_handler_pcb_t;
-
-typedef struct {
-    uint8_t chState;
-    print_str_t *ptPrintString;
-}duck_handler_pcb_t;
-
-typedef struct {
-    uint8_t chState;
     check_str_t tCheckHello;
 } check_hello_pcb_t;
 
@@ -54,9 +39,6 @@ typedef struct {
     check_str_t tCheckApple;
 } check_apple_pcb_t;
 
-static cat_handler_pcb_t s_tCatHandlerPCB;
-static dog_handler_pcb_t s_tDogHandlerPCB;
-static duck_handler_pcb_t s_tDuckHandlerPCB;
 static void msg_cat_handler(msg_t *ptMSG);
 static void msg_dog_handler(msg_t *ptMSG);
 static void msg_duck_handler(msg_t *ptMSG);
@@ -65,6 +47,8 @@ static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE];
 static byte_queue_t s_tFIFOin, s_tFIFOout;
 
 static event_t s_tPrintWorld, s_tPrintApple, s_tPrintOrange, s_tCatHandlerEvent, s_tDogHandlerEvent, s_tDuckHandlerEvent;
+static event_t s_tHandlerEvent,s_tHandlerEventEnd;
+static msg_t s_tCurrentMsg;
 
 static check_hello_pcb_t s_tCheckHelloPCB;
 static check_apple_pcb_t s_tCheckApplePCB;
@@ -81,12 +65,19 @@ static fsm_rt_t task_cat(void);
 static fsm_rt_t task_dog(void);
 static fsm_rt_t task_duck(void);
 
+static void msg_handler(msg_t*ptMSG);
+static fsm_rt_t task_msg_handler(void);
+static uint8_t* true_key(uint8_t* pchKey);
+
 static fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 static fsm_rt_t check_apple(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 
 static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
 static uint8_t s_chCheckStrPool[256] ALIGN(__alignof__(check_str_t));
+
+
+
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
 
@@ -107,9 +98,27 @@ static void system_init(void)
 int main(void)
 {
     const static msg_t c_tMSGMap[] = {
-                        {"cat", &s_tCatHandlerPCB, &msg_cat_handler},
-                        {"dog", &s_tCatHandlerPCB, &msg_dog_handler},
-                        {"duck", &s_tCatHandlerPCB, &msg_duck_handler}};
+                        {"cat", &s_tHandlerEvent, &msg_handler},
+                        {"dog", &s_tHandlerEvent, &msg_handler},
+                        {"duck", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x50", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x50", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x51", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x52", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x53", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x54", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x55", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x56", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x57", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x58", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x59", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x5a", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x5b", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x4f\x5c", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x5b\x41", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x5b\x42", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x5b\x43", &s_tHandlerEvent, &msg_handler},
+                        {"\x1b\x5b\x44", &s_tHandlerEvent, &msg_handler}};
     const static check_msg_map_cfg_t c_tCheckMSGMapCFG = {
                                         UBOUND(c_tMSGMap), 
                                         &s_tFIFOin, 
@@ -136,6 +145,8 @@ int main(void)
     INIT_EVENT(&s_tCatHandlerEvent, false, false);
     INIT_EVENT(&s_tDogHandlerEvent, false, false);
     INIT_EVENT(&s_tDuckHandlerEvent, false, false);
+    INIT_EVENT(&s_tHandlerEvent,false,false);
+    INIT_EVENT(&s_tHandlerEventEnd,true,false);
     POOL_ADD_HEAP(print_str, &s_tPrintFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
     POOL_ADD_HEAP(check_str, &s_tCheckFreeList, s_chCheckStrPool, UBOUND(s_chCheckStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
@@ -145,49 +156,41 @@ int main(void)
     LED1_OFF();
     while (1) {
         breath_led();
+        task_msg_handler();
         task_print_world();
         task_print_apple();
         task_print_orange();
-        task_cat();
-        task_dog();
-        task_duck();
         task_check_use_peek(&s_tCheckWordsUsePeek);
         serial_in_task();
         serial_out_task();
     }
 }
 
-static void msg_cat_handler(msg_t *ptMSG)
-{   
-    SET_EVENT(&s_tCatHandlerEvent);
-}
-
-
-static void msg_dog_handler(msg_t *ptMSG)
+void msg_handler(msg_t*ptMSG)
 {
-    SET_EVENT(&s_tDogHandlerEvent);  
+    if ((ptMSG != NULL) && (ptMSG->pTarget != NULL)) {
+        SET_EVENT(ptMSG->pTarget);
+        if (WAIT_EVENT(&s_tHandlerEventEnd)) {
+            s_tCurrentMsg = *ptMSG;
+        }
+    }
 }
 
-static void msg_duck_handler(msg_t *ptMSG)
-{
-    SET_EVENT(&s_tDuckHandlerEvent);   
-}
-
-fsm_rt_t task_cat(void) 
+fsm_rt_t task_msg_handler(void) 
 {
     static print_str_t *s_ptPrintString;
     static enum {
         START,
         INIT,
         WAIT_PRINT,
-        PRINT_CAT
+        PRINT_WORDS
     } s_tState = START;
     switch (s_tState) {
         case START:
             s_tState = WAIT_PRINT;
             //break;
         case WAIT_PRINT:
-            if (WAIT_EVENT(&s_tCatHandlerEvent)) {
+            if (WAIT_EVENT(&s_tHandlerEvent)) {
                 s_tState = INIT;
                 //break;
             } else {
@@ -196,23 +199,24 @@ fsm_rt_t task_cat(void)
         case INIT:
             s_ptPrintString = POOL_ALLOCATE(print_str,&s_tPrintFreeList);
             if (s_ptPrintString == NULL) {
-                printf("cat allocate null");
                 break;
             }
             do {
+                static uint8_t s_chBuffer[30];
+                sprintf(s_chBuffer,"%.5s Key is pressed.\r\n",true_key(s_tCurrentMsg.pchMessage));
                 const print_str_cfg_t c_tCFG = {
-                    "cat has four legs\r\n",
+                    s_chBuffer,
                     &s_tFIFOout,
                     &enqueue_byte
                 };
                 print_string_init(s_ptPrintString, &c_tCFG);
             } while (0);
-            s_tState = PRINT_CAT;
+            s_tState = PRINT_WORDS;
             // break;
-        case PRINT_CAT:
+        case PRINT_WORDS:
             if (fsm_rt_cpl == print_string(s_ptPrintString)) {
                 POOL_FREE(print_str, &s_tPrintFreeList, s_ptPrintString);
-                RESET_EVENT(&s_tCatHandlerEvent);
+                SET_EVENT(&s_tHandlerEventEnd);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -223,103 +227,63 @@ fsm_rt_t task_cat(void)
     }
     return fsm_rt_on_going;
 }
-fsm_rt_t task_dog(void) 
+
+static uint8_t* true_key(uint8_t* pchKey)
 {
-    static print_str_t *s_ptPrintString;
-    static enum {
-        START,
-        INIT,
-        WAIT_PRINT,
-        PRINT_DOG
-    } s_tState = START;
-    switch (s_tState) {
-        case START:
-            s_tState = WAIT_PRINT;
-            //break;
-        case WAIT_PRINT:
-            if (WAIT_EVENT(&s_tDogHandlerEvent)) {
-                s_tState = INIT;
-                //break;
-            } else {
-                break;
-            }
-        case INIT:
-            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tPrintFreeList);
-            if (s_ptPrintString == NULL) {
-                break;
-            }
-            do {
-                const print_str_cfg_t c_tCFG = {
-                    "dog has four legs\r\n",
-                    &s_tFIFOout,
-                    &enqueue_byte
-                };
-                print_string_init(s_ptPrintString, &c_tCFG);
-            } while (0);
-            s_tState = PRINT_DOG;
-            // break;
-        case PRINT_DOG:
-            if (fsm_rt_cpl == print_string(s_ptPrintString)) {
-                POOL_FREE(print_str,&s_tPrintFreeList,s_ptPrintString);
-                RESET_EVENT(&s_tDogHandlerEvent);
-                TASK_RESET_FSM();
-                return fsm_rt_cpl;
-            }
+    uint8_t *chKey = pchKey + 2;
+    switch (*chKey) {
+        case 0x50:
+            return "F1";
+            break;
+        case 0x51:
+            return "F2";
+            break;
+        case 0x52:
+            return "F3";
+            break;
+        case 0x53:
+            return "F4";
+            break;
+        case 0x54:
+            return "F5";
+            break;
+        case 0x55:
+            return "F6";
+            break;
+        case 0x56:
+            return "F7";
+            break;
+        case 0x57:
+            return "F8";
+            break;
+        case 0x58:
+            return "F9";
+            break;
+        case 0x59:
+            return "F10";
+            break;
+        case 0x5A:
+            return "F11";
+            break;
+        case 0x5B:
+            return "F12";
+            break;
+        case 0x41:
+            return "UP";
+            break;
+        case 0x42:
+            return "DOWN";
+            break;
+        case 0x43:
+            return "RIGHT";
+            break;
+        case 0x44:
+            return "LEFT";
             break;
         default:
-            return fsm_rt_err;
+            return  pchKey;
             break;
     }
-    return fsm_rt_on_going;
-}
-fsm_rt_t task_duck(void) 
-{
-    static print_str_t *s_ptPrintString;
-    static enum {
-        START,
-        INIT,
-        WAIT_PRINT,
-        PRINT_DUCK
-    } s_tState = START;
-    switch (s_tState) {
-        case START:
-            s_tState = WAIT_PRINT;
-            //break;
-        case WAIT_PRINT:
-            if (WAIT_EVENT(&s_tDuckHandlerEvent)) {
-                s_tState = INIT;
-                //break;
-            } else {
-                break;
-            }
-        case INIT:
-            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tPrintFreeList);
-            if (s_ptPrintString == NULL) {
-                break;
-            }
-            do {
-                const print_str_cfg_t c_tCFG = {
-                    "duck has two legs\r\n",
-                    &s_tFIFOout,
-                    &enqueue_byte
-                };
-                print_string_init(s_ptPrintString, &c_tCFG);
-            } while (0);
-            s_tState = PRINT_DUCK;
-            // break;
-        case PRINT_DUCK:
-            if (fsm_rt_cpl == print_string(s_ptPrintString)) {
-                POOL_FREE(print_str,&s_tPrintFreeList,s_ptPrintString);
-                RESET_EVENT(&s_tDuckHandlerEvent);
-                TASK_RESET_FSM();
-                return fsm_rt_cpl;
-            }
-            break;
-        default:
-            return fsm_rt_err;
-            break;
-    }
-    return fsm_rt_on_going;
 }
 
 static fsm_rt_t task_print_world(void)
