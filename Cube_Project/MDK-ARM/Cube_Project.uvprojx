@@ -424,11 +424,6 @@
               <FilePath>..\User_App\event\event.c</FilePath>
             </File>
             <File>
-              <FileName>check_use_peek.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User_App\check_use_peek\check_use_peek.c</FilePath>
-            </File>
-            <File>
               <FileName>critical_sector.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User_App\critical_sector\critical_sector.c</FilePath>
@@ -449,11 +444,6 @@
               <FilePath>..\User_App\mailbox\mailbox.c</FilePath>
             </File>
             <File>
-              <FileName>print_string.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User_App\print_string\print_string.c</FilePath>
-            </File>
-            <File>
               <FileName>app_cfg.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User_App\app_cfg.h</FilePath>
@@ -464,14 +454,24 @@
               <FilePath>..\User_App\check_string\check_string.c</FilePath>
             </File>
             <File>
-              <FileName>msg_map.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User_App\msg_map\msg_map.c</FilePath>
-            </File>
-            <File>
               <FileName>t_pool.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User_App\t_pool\t_pool.h</FilePath>
+            </File>
+            <File>
+              <FileName>print_string.lib</FileName>
+              <FileType>4</FileType>
+              <FilePath>..\User_App\print_string\print_string.lib</FilePath>
+            </File>
+            <File>
+              <FileName>check_use_peek.lib</FileName>
+              <FileType>4</FileType>
+              <FilePath>..\User_App\check_use_peek\check_use_peek.lib</FilePath>
+            </File>
+            <File>
+              <FileName>msg_map.lib</FileName>
+              <FileType>4</FileType>
+              <FilePath>..\User_App\msg_map\msg_map.lib</FilePath>
             </File>
           </Files>
         </Group>

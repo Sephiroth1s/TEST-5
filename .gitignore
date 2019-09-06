@@ -75,5 +75,8 @@ RTE_Components.h
 # Visio
 *.vsd
 *.~vsd
+!print_string.lib
+!msg_map.lib
+!check_use_peek.lib
 
 
