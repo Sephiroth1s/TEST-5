@@ -29,3 +29,17 @@ DEF_POOL(print_str, print_str_t);
 extern fsm_rt_t print_string(print_str_t *ptThis);
 extern bool print_string_init(print_str_t *ptThis, const print_str_cfg_t *ptCFG);
 #endif
+declare_class(print_str_t)
+def_class(print_str_t,
+private_member(
+
+)
+protected_member(
+
+)
+)
+end_def_class(print_str_t)
+
+def_interface(i_print_str_t)
+
+end_def_interface(i_print_str_t)
