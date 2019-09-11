@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include "../queue/queue.h"
 #include "../uart/uart.h"
-#define this (*ptThis)
+#include "../../Vsf/release/kernel/beta/vsf/utilities/3rd-party/PLOOC/plooc_class.h"
 
 #define TASK_STR_RESET_FSM()  \
     do {                      \
@@ -20,35 +20,48 @@
 #error No defined macro PRINT_STR_OUTPUT_BYTE(__BYTE) for output byte, please define one with prototype bool (*)(uint8_t chByte);
 #endif
 #endif
+
+const i_print_str_t g_print_string = {
+    .Init = &print_string_init,
+    .Print = &print_string,
+};
+
 IMPLEMENT_POOL(print_str, print_str_t);
-bool print_string_init(print_str_t *ptThis, const print_str_cfg_t *ptCFG)
+bool print_string_init(print_str_t *ptObj, const print_str_cfg_t *ptCFG)
 {
+    /* initialise "this" (i.e. ptThis) to access class members */
+    class_internal(ptObj, ptThis, print_str_t);
     enum {
         START
     };
+    ASSERT(NULL != ptObj && NULL != ptCFG);
+    
     if (   (NULL == ptCFG) 
-        || (NULL == ptThis) 
         || (NULL == ptCFG->pTarget)
-        || (NULL == ptCFG->fnPrintByte)) {
+        || (NULL == ptCFG->use_as__fn_print_byte_t)) {
         return false;
     }
     this.chState = START;
     this.pchString = ptCFG->pchString;
     this.pTarget = ptCFG->pTarget;
 #ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
-    this.fnPrintByte = ptCFG->fnPrintByte;
+    this.use_as__fn_print_byte_t = ptCFG->use_as__fn_print_byte_t;
 #endif
     return true;
 }
 
-fsm_rt_t print_string(print_str_t *ptThis)
+fsm_rt_t print_string(print_str_t *ptObj)
 {
+    /* initialise "this" (i.e. ptThis) to access class members */
+    class_internal(ptObj, ptThis, print_str_t);
     enum {
         START,
         PRINT_CHECK,
         PRINT_STR
     };
-    if (NULL == ptThis || (this.fnPrintByte == NULL) || (NULL == this.pTarget)) {
+    ASSERT(NULL != ptObj);
+    
+    if ((this.use_as__fn_print_byte_t == NULL) || (NULL == this.pTarget)) {
         return fsm_rt_err;
     }
     switch (this.chState) {

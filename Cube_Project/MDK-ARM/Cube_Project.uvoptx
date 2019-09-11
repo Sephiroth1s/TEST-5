@@ -498,8 +498,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\User_App\print_string\print_string.lib</PathWithFileName>
-      <FilenameWithoutPath>print_string.lib</FilenameWithoutPath>
+      <PathWithFileName>..\User_App\check_use_peek\check_use_peek.lib</PathWithFileName>
+      <FilenameWithoutPath>check_use_peek.lib</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -510,20 +510,20 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\User_App\check_use_peek\check_use_peek.lib</PathWithFileName>
-      <FilenameWithoutPath>check_use_peek.lib</FilenameWithoutPath>
+      <PathWithFileName>..\User_App\msg_map\msg_map.lib</PathWithFileName>
+      <FilenameWithoutPath>msg_map.lib</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
     <File>
       <GroupNumber>3</GroupNumber>
       <FileNumber>16</FileNumber>
-      <FileType>4</FileType>
+      <FileType>1</FileType>
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\User_App\msg_map\msg_map.lib</PathWithFileName>
-      <FilenameWithoutPath>msg_map.lib</FilenameWithoutPath>
+      <PathWithFileName>..\User_App\print_string\print_string.c</PathWithFileName>
+      <FilenameWithoutPath>print_string.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -715,7 +715,7 @@
 
   <Group>
     <GroupName>Vsf/Retarget</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -747,7 +747,7 @@
 
   <Group>
     <GroupName>Plooc</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -758,7 +758,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Plooc\plooc.h</PathWithFileName>
+      <PathWithFileName>..\..\Vsf\release\kernel\beta\vsf\utilities\3rd-party\PLOOC\plooc.h</PathWithFileName>
       <FilenameWithoutPath>plooc.h</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -770,7 +770,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Plooc\plooc_class.h</PathWithFileName>
+      <PathWithFileName>..\..\Vsf\release\kernel\beta\vsf\utilities\3rd-party\PLOOC\plooc_class.h</PathWithFileName>
       <FilenameWithoutPath>plooc_class.h</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -782,7 +782,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Plooc\plooc_class_simple.h</PathWithFileName>
+      <PathWithFileName>..\..\Vsf\release\kernel\beta\vsf\utilities\3rd-party\PLOOC\plooc_class_simple.h</PathWithFileName>
       <FilenameWithoutPath>plooc_class_simple.h</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -794,7 +794,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\Plooc\plooc_class_strict.h</PathWithFileName>
+      <PathWithFileName>..\..\Vsf\release\kernel\beta\vsf\utilities\3rd-party\PLOOC\plooc_class_strict.h</PathWithFileName>
       <FilenameWithoutPath>plooc_class_strict.h</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
