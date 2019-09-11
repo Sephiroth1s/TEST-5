@@ -209,12 +209,12 @@ fsm_rt_t task_msg_handler(void)
                     &s_tFIFOout,
                     &enqueue_byte
                 };
-                print_string_init(s_ptPrintString, &c_tCFG);
+                PRINT_STRING.Init(s_ptPrintString, &c_tCFG);
             } while (0);
             s_tState = PRINT_WORDS;
             // break;
         case PRINT_WORDS:
-            if (fsm_rt_cpl == print_string(s_ptPrintString)) {
+            if (fsm_rt_cpl == PRINT_STRING.Print(s_ptPrintString)) {
                 POOL_FREE(print_str, &s_tPrintFreeList, s_ptPrintString);
                 SET_EVENT(&s_tHandlerEventEnd);
                 TASK_RESET_FSM();
@@ -340,12 +340,12 @@ static fsm_rt_t task_world(void)
                     &s_tFIFOout,
                     &enqueue_byte
                 };
-                print_string_init(s_ptPrintString, &c_tCFG);
+                PRINT_STRING.Init(s_ptPrintString, &c_tCFG);
             } while (0);
             s_tState = PRINT_WORLD;
             // break;
         case PRINT_WORLD:
-            if (fsm_rt_cpl == print_string(s_ptPrintString)) {
+            if (fsm_rt_cpl == PRINT_STRING.Print(s_ptPrintString)) {
                 POOL_FREE(print_str,&s_tPrintFreeList,s_ptPrintString);
                 RESET_EVENT(&s_tPrintWorld);
                 TASK_RESET_FSM();
@@ -413,12 +413,12 @@ static fsm_rt_t task_apple(void)
                     &s_tFIFOout,
                     &enqueue_byte
                 };
-                print_string_init(s_ptPrintString, &c_tCFG);
+                PRINT_STRING.Init(s_ptPrintString, &c_tCFG);
             } while (0);
             s_tState = PRINT_APPLE;
             // break;
         case PRINT_APPLE:
-            if (fsm_rt_cpl == print_string(s_ptPrintString)) {
+            if (fsm_rt_cpl == PRINT_STRING.Print(s_ptPrintString)) {
                 POOL_FREE(print_str,&s_tPrintFreeList,s_ptPrintString);
                 RESET_EVENT(&s_tPrintApple);
                 TASK_RESET_FSM();
@@ -486,12 +486,12 @@ static fsm_rt_t task_orange(void)
                     &s_tFIFOout,
                     &enqueue_byte
                 };
-                print_string_init(s_ptPrintString, &c_tCFG);
+                PRINT_STRING.Init(s_ptPrintString, &c_tCFG);
             } while (0);
             s_tState = PRINT_ORANGE;
             // break;
         case PRINT_ORANGE:
-            if (fsm_rt_cpl == print_string(s_ptPrintString)) {
+            if (fsm_rt_cpl == PRINT_STRING.Print(s_ptPrintString)) {
                 POOL_FREE(print_str,&s_tPrintFreeList,s_ptPrintString);
                 RESET_EVENT(&s_tPrintOrange);
                 TASK_RESET_FSM();
