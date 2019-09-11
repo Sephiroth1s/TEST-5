@@ -1,7 +1,6 @@
-
 #include "app_cfg.h"
 #define __PRINT_STR_CLASS_IMPLEMENT
-#include "../print_string/print_string.h"
+#include "./print_string.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include "../queue/queue.h"

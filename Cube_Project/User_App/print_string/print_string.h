@@ -27,7 +27,7 @@ def_class(print_str_t,
         uint8_t *pchString;
         void *pTarget;
 #ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
-        implement(fn_print_byte_t);
+        implement(fn_print_byte_t)
 #endif
     )
 )
@@ -37,7 +37,7 @@ typedef struct {
     uint8_t *pchString;
     void *pTarget;
 #ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
-    implement(fn_print_byte_t);
+    implement(fn_print_byte_t)
 #endif
 } print_str_cfg_t;
 
