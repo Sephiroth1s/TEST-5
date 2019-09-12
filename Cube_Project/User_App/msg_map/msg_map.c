@@ -1,7 +1,8 @@
 #include "app_cfg.h"
+#define __MSG_MAP_CLASS_IMPLEMENT
 #include "../queue/queue.h"
 #include "../check_string/check_string.h"
-#include "../msg_map/msg_map.h"
+#include "./msg_map.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -16,24 +17,32 @@
     do {                         \
         s_tState = START;        \
     } while (0);
+#ifndef ASSERT
+#   define ASSERT(...)
+#endif
+
+const i_check_msg_map_t CHECK_MSG_MAP{
+    .Init = &check_msg_map_init,
+    .Check = &check_msg_map,
+};
 
 // check_* only used in peek
-bool check_msg_map_init(check_msg_map_t *ptThis, check_msg_map_cfg_t *ptCFG)
+bool check_msg_map_init(check_msg_map_t *ptObj, check_msg_map_cfg_t *ptCFG)
 {
+    /* initialise "this" (i.e. ptThis) to access class members */
+    class_internal(ptObj, ptThis, check_msg_map_t);
     enum {
         START
     };
-    if ((NULL == ptCFG)) {
-        if (    (NULL == ptThis) 
-            ||  (NULL == ptCFG->ptMSGMap)
-            ||  (NULL == ptCFG->ptQueue)){
-                return false;
-            }
+    ASSERT(NULL != ptObj && NULL != ptCFG);
+    
+    if ((NULL == ptCFG->use_as__msg_t) || (NULL == ptCFG->use_as__byte_queue_t)) {
+        return false;
     }
     this.chState = START;
     this.chMSGNumber = ptCFG->chMSGNumber;
-    this.ptQueue = ptCFG->ptQueue;
-    this.ptMSGMap = ptCFG->ptMSGMap;
+    this.use_as__byte_queue_t = ptCFG->use_as__byte_queue_t;
+    this.use_as__msg_t = ptCFG->use_as__msg_t;
     return true;
 }
 
@@ -47,7 +56,11 @@ fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool 
         CHECK_MSG_NUMBER,
         DROP
     };
-    check_msg_map_t * ptThis=(check_msg_map_t *)pTarget;
+    class_internal(pTarget, ptThis, check_msg_map_t);
+    enum {
+        START
+    };
+    ASSERT(NULL != pTarget && NULL != ptCFG);
     switch (this.chState) {
         case START:
             this.chVoteDropCount = 0;
@@ -58,14 +71,14 @@ fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool 
             do {
                 this.bIsRequestDrop = false;
                 RESET_PEEK_BYTE(this.ptQueue);
-                const check_str_cfg_t c_tCheckMSGCFG = {(this.ptMSGMap[this.chMSGCount]).pchMessage,ptReadByte};
-                check_string_init(&this.tCheckMSG, &c_tCheckMSGCFG);
+                const check_str_cfg_t c_tCheckMSGCFG = {(this.use_as__msg_t[this.chMSGCount]).pchMessage,ptReadByte};
+                check_string_init(&this.use_as__check_str_t, &c_tCheckMSGCFG);
             } while (0);
             this.chState = CHECK_MSG;
             //break;
         case CHECK_MSG:
             *pbRequestDrop = false;
-            if (fsm_rt_cpl == check_string(&this.tCheckMSG, &this.bIsRequestDrop)) {
+            if (fsm_rt_cpl == check_string(&this.use_as__check_str_t, &this.bIsRequestDrop)) {
                 this.chState = MSG_HANLDER;
                 goto GOTO_MSG_HANLDER;
                 break;
@@ -96,7 +109,7 @@ fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool 
             break;
         case MSG_HANLDER:
         GOTO_MSG_HANLDER:
-            (this.ptMSGMap[this.chMSGCount]).fnHandler(&this.ptMSGMap[this.chMSGCount]);
+            (this.use_as__msg_t[this.chMSGCount]).fnHandler(&this.use_as__msg_t[this.chMSGCount]);
             TASK_RESET_FSM();
             return fsm_rt_cpl;
             break;

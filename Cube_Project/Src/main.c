@@ -129,7 +129,7 @@ int main(void)
                                 {&s_tCheckHelloPCB, check_hello},
                                 {&s_tCheckApplePCB, check_apple},
                                 {&s_tCheckOrangePCB, check_orange},
-                                {&s_tCheckMSGMap, check_msg_map}};
+                                {&s_tCheckMSGMap, &CHECK_MSG_MAP.Check}};
     static const check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
                                         UBOUND(c_tCheckWordsAgent),
                                         &s_tFIFOin,
@@ -151,7 +151,7 @@ int main(void)
     POOL_ADD_HEAP(check_str, &s_tCheckFreeList, s_chCheckStrPool, UBOUND(s_chCheckStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
-    check_msg_map_init(&s_tCheckMSGMap, &c_tCheckMSGMapCFG);
+    CHECK_MSG_MAP.Init(&s_tCheckMSGMap, &c_tCheckMSGMapCFG);
     check_use_peek_init(&s_tCheckWordsUsePeek, &c_tCheckWordsUsePeekCFG);
     LED1_OFF();
     while (1) {
