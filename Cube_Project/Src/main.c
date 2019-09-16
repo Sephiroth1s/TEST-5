@@ -97,7 +97,8 @@ static void system_init(void)
 /*================================= MAIN =====================================*/
 int main(void)
 {
-    const static msg_t c_tMSGMap[] = {
+    system_init();
+    static msg_t c_tMSGMap[] = {
                         {"cat", &s_tHandlerEvent, &msg_handler},
                         {"dog", &s_tHandlerEvent, &msg_handler},
                         {"duck", &s_tHandlerEvent, &msg_handler},
@@ -125,18 +126,17 @@ int main(void)
                                         c_tMSGMap};
     static check_msg_map_t s_tCheckMSGMap;
 
-    static const check_agent_t c_tCheckWordsAgent[] = {
+    static  check_agent_t c_tCheckWordsAgent[] = {
                                 {&s_tCheckHelloPCB, check_hello},
                                 {&s_tCheckApplePCB, check_apple},
                                 {&s_tCheckOrangePCB, check_orange},
-                                {&s_tCheckMSGMap, &CHECK_MSG_MAP.Check}};
+                                {&s_tCheckMSGMap, check_msg_map}};
     static const check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
                                         UBOUND(c_tCheckWordsAgent),
                                         &s_tFIFOin,
                                         (check_agent_t *)c_tCheckWordsAgent};
     static check_use_peek_t s_tCheckWordsUsePeek;
 
-    system_init();
     POOL_INIT(print_str, &s_tPrintFreeList);
     POOL_INIT(check_str, &s_tCheckFreeList);
     INIT_EVENT(&s_tPrintWorld, false, false);
@@ -152,6 +152,7 @@ int main(void)
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
     CHECK_MSG_MAP.Init(&s_tCheckMSGMap, &c_tCheckMSGMapCFG);
+    // check_msg_map_init(&s_tCheckMSGMap, &c_tCheckMSGMapCFG);
     check_use_peek_init(&s_tCheckWordsUsePeek, &c_tCheckWordsUsePeekCFG);
     LED1_OFF();
     while (1) {

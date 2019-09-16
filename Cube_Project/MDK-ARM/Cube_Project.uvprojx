@@ -464,14 +464,14 @@
               <FilePath>..\User_App\check_use_peek\check_use_peek.lib</FilePath>
             </File>
             <File>
-              <FileName>msg_map.lib</FileName>
-              <FileType>4</FileType>
-              <FilePath>..\User_App\msg_map\msg_map.lib</FilePath>
-            </File>
-            <File>
               <FileName>print_string.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User_App\print_string\print_string.c</FilePath>
+            </File>
+            <File>
+              <FileName>msg_map.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User_App\msg_map\msg_map.c</FilePath>
             </File>
           </Files>
         </Group>

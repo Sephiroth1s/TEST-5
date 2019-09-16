@@ -21,7 +21,7 @@
 #   define ASSERT(...)
 #endif
 
-const i_check_msg_map_t CHECK_MSG_MAP{
+ i_check_msg_map_t CHECK_MSG_MAP = {
     .Init = &check_msg_map_init,
     .Check = &check_msg_map,
 };
@@ -36,18 +36,20 @@ bool check_msg_map_init(check_msg_map_t *ptObj, check_msg_map_cfg_t *ptCFG)
     };
     ASSERT(NULL != ptObj && NULL != ptCFG);
     
-    if ((NULL == ptCFG->use_as__msg_t) || (NULL == ptCFG->use_as__byte_queue_t)) {
+    if ((NULL == ptCFG->ptMSGMap) || (NULL == ptCFG->ptQueue)) {
         return false;
     }
+    // check_msg_map_t *ptThis = (check_msg_map_t *)ptObj;
     this.chState = START;
     this.chMSGNumber = ptCFG->chMSGNumber;
-    this.use_as__byte_queue_t = ptCFG->use_as__byte_queue_t;
-    this.use_as__msg_t = ptCFG->use_as__msg_t;
+    this.ptQueue = ptCFG->ptQueue;
+    this.ptMSGMap = ptCFG->ptMSGMap;
     return true;
 }
 
 fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop)
 {
+    class_internal(pTarget, ptThis, check_msg_map_t);
     enum {
         START,
         INIT_CHECK_MSG,
@@ -56,10 +58,7 @@ fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool 
         CHECK_MSG_NUMBER,
         DROP
     };
-    class_internal(pTarget, ptThis, check_msg_map_t);
-    enum {
-        START
-    };
+    // check_msg_map_t *ptThis = (check_msg_map_t *)pTarget;
     ASSERT(NULL != pTarget && NULL != ptCFG);
     switch (this.chState) {
         case START:
@@ -71,14 +70,14 @@ fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool 
             do {
                 this.bIsRequestDrop = false;
                 RESET_PEEK_BYTE(this.ptQueue);
-                const check_str_cfg_t c_tCheckMSGCFG = {(this.use_as__msg_t[this.chMSGCount]).pchMessage,ptReadByte};
-                check_string_init(&this.use_as__check_str_t, &c_tCheckMSGCFG);
+                const check_str_cfg_t c_tCheckMSGCFG = {(this.ptMSGMap[this.chMSGCount]).pchMessage,ptReadByte};
+                check_string_init(&this.tCheckMSG, &c_tCheckMSGCFG);
             } while (0);
             this.chState = CHECK_MSG;
             //break;
         case CHECK_MSG:
             *pbRequestDrop = false;
-            if (fsm_rt_cpl == check_string(&this.use_as__check_str_t, &this.bIsRequestDrop)) {
+            if (fsm_rt_cpl == check_string(&this.tCheckMSG, &this.bIsRequestDrop)) {
                 this.chState = MSG_HANLDER;
                 goto GOTO_MSG_HANLDER;
                 break;
@@ -109,7 +108,7 @@ fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool 
             break;
         case MSG_HANLDER:
         GOTO_MSG_HANLDER:
-            (this.use_as__msg_t[this.chMSGCount]).fnHandler(&this.use_as__msg_t[this.chMSGCount]);
+            (this.ptMSGMap[this.chMSGCount]).fnHandler(&this.ptMSGMap[this.chMSGCount]);
             TASK_RESET_FSM();
             return fsm_rt_cpl;
             break;

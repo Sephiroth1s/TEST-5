@@ -27,35 +27,53 @@ struct _msg_t {
 
 #include "../../Vsf/release/kernel/beta/vsf/utilities/3rd-party/PLOOC/plooc_class.h"
 
+// typedef struct {
+//     uint8_t chMSGNumber;
+//     byte_queue_t *ptQueue;
+//     msg_t *ptMSGMap;
+// } check_msg_map_cfg_t;
+
+// typedef struct {
+//     uint8_t chState;
+//     uint8_t chMSGNumber;
+//     uint8_t chVoteDropCount;
+//     uint8_t chMSGCount;
+//     bool bIsRequestDrop;
+//     byte_queue_t *ptQueue;
+//     check_str_t tCheckMSG;
+//     msg_t *ptMSGMap;
+// } check_msg_map_t;
+
+
 declare_class(check_msg_map_t)
 
 def_class(check_msg_map_t,
     private_member(
-        uint8_t chState;
+       uint8_t chState;
         uint8_t chMSGNumber;
         uint8_t chVoteDropCount;
         uint8_t chMSGCount;
         bool bIsRequestDrop;
-        implement(byte_queue_t*)
-        implement(check_str_t)
-        implement(msg_t*)
+        byte_queue_t *ptQueue;
+        check_str_t tCheckMSG;
+        msg_t *ptMSGMap;
     )
 )
 end_def_class(check_msg_map_t)
 
 typedef struct {
     uint8_t chMSGNumber;
-    implement(byte_queue_t*)
-    implement(msg_t*)
+    byte_queue_t *ptQueue;
+    msg_t *ptMSGMap;
 } check_msg_map_cfg_t;
 
 
 def_interface(i_check_msg_map_t)
-    bool    (*Init) (check_msg_map_t *ptObj, check_msg_map_cfg_t *ptCFG);
-    fsm_rt_t (*Check) (void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
+    bool     (*Init)    (check_msg_map_t *ptObj, check_msg_map_cfg_t *ptCFG);
+    fsm_rt_t (*Check)   (void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
 end_def_interface(i_check_msg_map_t)
 
-extern const i_check_msg_map_t CHECK_MSG_MAP;
+extern  i_check_msg_map_t CHECK_MSG_MAP;
 
 extern bool check_msg_map_init(check_msg_map_t *ptObj, check_msg_map_cfg_t *ptCFG);
 extern fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
