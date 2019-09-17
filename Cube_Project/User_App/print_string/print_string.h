@@ -3,6 +3,7 @@
 #define __PRINT_STRING_H__
 #include <stdint.h>
 #include <stdbool.h>
+#include "../queue/queue.h"
 #include "../t_pool/t_pool.h"
 #include "../../Vsf/release/kernel/beta/vsf/utilities/3rd-party/PLOOC/plooc.h"
 
@@ -26,9 +27,6 @@ def_class(print_str_t,
         uint8_t chState;
         uint8_t *pchString;
         void *pTarget;
-#ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
-        implement(fn_print_byte_t)
-#endif
     )
 )
 end_def_class(print_str_t)
@@ -36,9 +34,6 @@ end_def_class(print_str_t)
 typedef struct {
     uint8_t *pchString;
     void *pTarget;
-#ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
-    implement(fn_print_byte_t)
-#endif
 } print_str_cfg_t;
 
 def_interface(i_print_str_t) 
@@ -53,5 +48,6 @@ extern const i_print_str_t PRINT_STRING;
 
 extern fsm_rt_t print_string(print_str_t *ptObj);
 extern bool print_string_init(print_str_t *ptObj, const print_str_cfg_t *ptCFG);
+WEAK bool print_str_output_byte(void *ptThis, uint8_t pchByte);
 #endif
 

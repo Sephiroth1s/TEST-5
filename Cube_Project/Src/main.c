@@ -76,8 +76,7 @@ static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte,
 static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
 static uint8_t s_chCheckStrPool[256] ALIGN(__alignof__(check_str_t));
 
-
-
+static bool print_str_output_byte(void* ptThis, uint8_t pchByte);
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
 
@@ -658,4 +657,12 @@ fsm_rt_t serial_out_task(void)
             break;
     }
     return fsm_rt_on_going;
+}
+
+bool print_str_output_byte(void *ptThis, uint8_t pchByte)
+{
+    if (ENQUEUE_BYTE(ptThis, pchByte)) {
+        return true;
+    }
+    return false;
 }

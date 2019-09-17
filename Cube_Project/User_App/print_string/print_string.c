@@ -15,16 +15,6 @@
 #   define ASSERT(...)
 #endif
 
-#ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
-#ifndef PRINT_STR_OUTPUT_BYTE
-#error No defined macro PRINT_STR_OUTPUT_BYTE(__TARGET,__BYTE) for output byte, please define one with prototype bool (*)(void* pTarget,uint8_t chByte);
-#endif
-#else
-#ifndef PRINT_STR_OUTPUT_BYTE
-#error No defined macro PRINT_STR_OUTPUT_BYTE(__BYTE) for output byte, please define one with prototype bool (*)(uint8_t chByte);
-#endif
-#endif
-
 const i_print_str_t PRINT_STRING = {
     .Init = &print_string_init,
     .Print = &print_string,
@@ -42,16 +32,12 @@ bool print_string_init(print_str_t *ptObj, const print_str_cfg_t *ptCFG)
     ASSERT(NULL != ptObj && NULL != ptCFG);
     
     if (   (NULL == ptCFG) 
-        || (NULL == ptCFG->pTarget)
-        || (NULL == ptCFG->use_as__fn_print_byte_t)) {
+        || (NULL == ptCFG->pTarget)) {
         return false;
     }
     this.chState = START;
     this.pchString = ptCFG->pchString;
     this.pTarget = ptCFG->pTarget;
-#ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
-    this.use_as__fn_print_byte_t = ptCFG->use_as__fn_print_byte_t;
-#endif
     return true;
 }
 
@@ -66,7 +52,7 @@ fsm_rt_t print_string(print_str_t *ptObj)
     };
     ASSERT(NULL != ptObj);
     
-    if ((this.use_as__fn_print_byte_t == NULL) || (NULL == this.pTarget)) {
+    if (NULL == this.pTarget) {
         return fsm_rt_err;
     }
     switch (this.chState) {
@@ -82,21 +68,22 @@ fsm_rt_t print_string(print_str_t *ptObj)
             }
             // break;
         case PRINT_STR:
-#ifdef PRINT_STR_CFG_USE_FUNCTION_POINTER
-            if (PRINT_STR_OUTPUT_BYTE(this.pTarget, *this.pchString)) {
+            if (print_str_output_byte(this.pTarget, *this.pchString)) {
                 this.pchString++;
                 this.chState = PRINT_CHECK;
             }
-#else
-            if (PRINT_STR_OUTPUT_BYTE(*this.pchString)) {
-                this.pchString++;
-                this.chState = PRINT_CHECK;
-            }
-#endif
             break;
         default:
             return fsm_rt_err;
             break;
     }
     return fsm_rt_on_going;
+}
+
+WEAK bool print_str_output_byte(void *ptThis, uint8_t pchByte)
+{
+    if (serial_out(pchByte)) {
+        return true;
+    }
+    return false;
 }
