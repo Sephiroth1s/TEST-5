@@ -21,7 +21,7 @@
 #   define ASSERT(...)
 #endif
 
- i_check_msg_map_t CHECK_MSG_MAP = {
+ const i_check_msg_map_t CHECK_MSG_MAP = {
     .Init = &check_msg_map_init,
     .Check = &check_msg_map,
 };
@@ -58,8 +58,7 @@ fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool 
         CHECK_MSG_NUMBER,
         DROP
     };
-    // check_msg_map_t *ptThis = (check_msg_map_t *)pTarget;
-    ASSERT(NULL != pTarget && NULL != ptCFG);
+    ASSERT(NULL != pTarget && NULL != ptReadByte && NULL != pbRequestDrop);
     switch (this.chState) {
         case START:
             this.chVoteDropCount = 0;

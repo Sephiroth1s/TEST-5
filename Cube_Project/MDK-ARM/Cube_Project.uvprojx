@@ -459,11 +459,6 @@
               <FilePath>..\User_App\t_pool\t_pool.h</FilePath>
             </File>
             <File>
-              <FileName>check_use_peek.lib</FileName>
-              <FileType>4</FileType>
-              <FilePath>..\User_App\check_use_peek\check_use_peek.lib</FilePath>
-            </File>
-            <File>
               <FileName>print_string.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User_App\print_string\print_string.c</FilePath>
@@ -472,6 +467,11 @@
               <FileName>msg_map.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User_App\msg_map\msg_map.c</FilePath>
+            </File>
+            <File>
+              <FileName>check_use_peek.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User_App\check_use_peek\check_use_peek.c</FilePath>
             </File>
           </Files>
         </Group>

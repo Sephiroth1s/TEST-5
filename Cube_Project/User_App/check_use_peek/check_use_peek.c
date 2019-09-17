@@ -1,24 +1,37 @@
 #include "app_cfg.h"
 #include "../queue/queue.h"
 #include "../check_string/check_string.h"
-#include "../check_use_peek/check_use_peek.h"
+#define __CHECK_USE_PEEK_CLASS_IMPLEMENT
+#include "./check_use_peek.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+
 #define this (*ptThis)
 #define TASK_RESET_FSM()      \
     do {                      \
         this.chState = START; \
     } while (0);
 
-bool check_use_peek_init(check_use_peek_t *ptThis, const check_use_peek_cfg_t *ptCFG)
+#ifndef ASSERT
+#   define ASSERT(...)
+#endif
+
+const i_check_use_peek_t CHECK_USE_PEEK = {
+    .Init = &check_use_peek_init,
+    .CheckUsePeek = &task_check_use_peek,
+};
+
+bool check_use_peek_init(check_use_peek_t *ptObj, const check_use_peek_cfg_t *ptCFG)
 {
+    /* initialise "this" (i.e. ptThis) to access class members */
+    class_internal(ptObj, ptThis, check_use_peek_t);
     enum {
         START
     };
-    if (   (NULL == ptCFG) 
-        || (NULL == ptThis) 
-        || (NULL == ptCFG->ptQueue)
+    ASSERT(NULL != ptObj && NULL != ptCFG);
+
+    if (   (NULL == ptCFG->ptQueue)
         || (NULL == ptCFG->ptAgents) 
         || (NULL == ptCFG->ptAgents->pTarget) 
         || (NULL == ptCFG->ptAgents->fnCheckWords)) {
@@ -33,14 +46,18 @@ bool check_use_peek_init(check_use_peek_t *ptThis, const check_use_peek_cfg_t *p
     return true;
 }
 
-fsm_rt_t task_check_use_peek(check_use_peek_t *ptThis)
+fsm_rt_t task_check_use_peek(check_use_peek_t *ptObj)
 {
+    /* initialise "this" (i.e. ptThis) to access class members */
+    class_internal(ptObj, ptThis, check_use_peek_t);
     enum {
         START,
         CHECK_WORDS,
         DROP,
         CHECK_WORDS_NUMBER
     };
+    ASSERT(NULL != ptObj);
+    
     switch (this.chState) {
         case START:
             this.chVoteDropCount = 0;

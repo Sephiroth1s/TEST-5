@@ -152,8 +152,7 @@ int main(void)
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
     CHECK_MSG_MAP.Init(&s_tCheckMSGMap, &c_tCheckMSGMapCFG);
-    // check_msg_map_init(&s_tCheckMSGMap, &c_tCheckMSGMapCFG);
-    check_use_peek_init(&s_tCheckWordsUsePeek, &c_tCheckWordsUsePeekCFG);
+    CHECK_USE_PEEK.Init(&s_tCheckWordsUsePeek, &c_tCheckWordsUsePeekCFG);
     LED1_OFF();
     while (1) {
         breath_led();
@@ -161,7 +160,7 @@ int main(void)
         task_print_world();
         task_print_apple();
         task_print_orange();
-        task_check_use_peek(&s_tCheckWordsUsePeek);
+        CHECK_USE_PEEK.CheckUsePeek(&s_tCheckWordsUsePeek);
         serial_in_task();
         serial_out_task();
     }
