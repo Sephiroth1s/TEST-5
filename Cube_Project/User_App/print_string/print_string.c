@@ -21,7 +21,11 @@ const i_print_str_t PRINT_STRING = {
 };
 
 IMPLEMENT_POOL(print_str, print_str_t);
-WEAK bool print_str_output_byte(void *ptThis, uint8_t pchByte);
+
+WEAK bool print_str_output_byte(void *ptThis, uint8_t pchByte)
+{
+    return serial_out(pchByte);
+}
 
 bool print_string_init(print_str_t *ptObj, const print_str_cfg_t *ptCFG)
 {
@@ -81,7 +85,3 @@ fsm_rt_t print_string(print_str_t *ptObj)
     return fsm_rt_on_going;
 }
 
-WEAK bool print_str_output_byte(void *ptThis, uint8_t pchByte)
-{
-    return serial_out(pchByte);
-}
