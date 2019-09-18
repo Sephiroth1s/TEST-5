@@ -48,6 +48,6 @@ extern const i_print_str_t PRINT_STRING;
 
 extern fsm_rt_t print_string(print_str_t *ptObj);
 extern bool print_string_init(print_str_t *ptObj, const print_str_cfg_t *ptCFG);
-WEAK bool print_str_output_byte(void *ptThis, uint8_t pchByte);
+
 #endif
 

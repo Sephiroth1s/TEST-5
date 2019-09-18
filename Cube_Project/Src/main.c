@@ -76,7 +76,6 @@ static fsm_rt_t check_orange(void *pTarget, read_byte_evt_handler_t *ptReadByte,
 static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
 static uint8_t s_chCheckStrPool[256] ALIGN(__alignof__(check_str_t));
 
-static bool print_str_output_byte(void* ptThis, uint8_t pchByte);
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
 
@@ -97,7 +96,7 @@ static void system_init(void)
 int main(void)
 {
     system_init();
-    static msg_t c_tMSGMap[] = {
+    const static msg_t c_tMSGMap[] = {
                         {"cat", &s_tHandlerEvent, &msg_handler},
                         {"dog", &s_tHandlerEvent, &msg_handler},
                         {"duck", &s_tHandlerEvent, &msg_handler},
@@ -125,12 +124,12 @@ int main(void)
                                         c_tMSGMap};
     static check_msg_map_t s_tCheckMSGMap;
 
-    static  check_agent_t c_tCheckWordsAgent[] = {
+    const static  check_agent_t c_tCheckWordsAgent[] = {
                                 {&s_tCheckHelloPCB, check_hello},
                                 {&s_tCheckApplePCB, check_apple},
                                 {&s_tCheckOrangePCB, check_orange},
                                 {&s_tCheckMSGMap, check_msg_map}};
-    static const check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
+    const static check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
                                         UBOUND(c_tCheckWordsAgent),
                                         &s_tFIFOin,
                                         (check_agent_t *)c_tCheckWordsAgent};
