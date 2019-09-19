@@ -3,7 +3,24 @@
 #include "main.h"
 #include <stdio.h>
 
-
+#define RESET_ALL_ATTRIBUTES "\033[0m"		// 关闭所有属性
+#define SET_BRIGHT "\033[1m"		// 设置为高亮
+#define SET_UNDERSCORE "\033[4m"		// 下划线
+#define SET_BLINK "\033[5m"		// 闪烁
+#define SET_REVERSE "\033[7m"		// 反显
+#define SET_HIDDEN "\033[8m"		// 消隐
+#define CURSOR_UP "\033[A"		// 光标上移 n 行
+#define CURSOR_DOWN "\033[B"		// 光标下移 1 行
+#define CURSOR_RIGHT "\033[C"		// 光标右移 1 行
+#define CURSOR_LEFT "\033[D"		// 光标左移 1 行
+// #define "\033[y;xH"	// 设置光标位置
+#define CLEAR_SCREEN "\033[2J"		// 清屏
+#define ERASE_END_OF_LINE "\033[K"		// 清除从光标到行尾的内容
+#define ERASE_LINE "\033[2K"        //  清楚当前行
+#define SAVE_CURSOR "\033[s"		// 保存光标位置
+#define UNSAVE_CURSOR "\033[u"		// 恢复光标位置
+#define HIDDEN_CURSOR "\033[?25l"	// 隐藏光标
+#define DISPLAY_CURSOR "\033[?25h"	// 显示光标
 #define this (*ptThis)
 #define TASK_REENTER_RESET_FSM() \
     do {                         \
