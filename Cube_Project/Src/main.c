@@ -15,14 +15,14 @@
 #define CURSOR_LEFT "\033[D"		// 光标左移 1 行
 #define ENTER   "\x0A\x0D"
 #define CLEAR_SCREEN "\033[2J"		// 清屏
-#define ERASE_END_OF_LINE "\033[K"		// 清除从光标到行尾的内容
+#define ERASE_END_OF_LINE "\033[u\033[K"		// 跳转到保存位置并清除从光标到行尾的内容
 #define ERASE_LINE "\033[2K"        //  清楚当前行
-#define SAVE_CURSOR "\033[s"		// 保存光标位置
+#define INIT_CURSOR "\033[2K>\033[s"		// 清楚当前+保存光标位置+'>'符号
 #define UNSAVE_CURSOR "\033[u"		// 恢复光标位置
 #define HIDDEN_CURSOR "\033[?25l"	// 隐藏光标
 #define DISPLAY_CURSOR "\033[?25h"	// 显示光标
 #define this (*ptThis)
-#define TASK_REENTER_RESET_FSM() \
+#define TASK_CONSOLE_RESET_FSM() \
     do {                         \
         this.chState = START;    \
     } while (0);
@@ -38,23 +38,39 @@
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
 
+typedef struct
+{
+    uint8_t chState;
+    print_str_t *ptPrintStr;
+}update_line_t;
+
+typedef struct {
+    uint8_t chState;
+    read_byte_evt_handler_t *ptReadByteEvent;
+    print_str_t *ptPrintStr;
+    uint8_t *pchBuffer;
+    uint8_t chByte;
+    uint8_t chCounter;
+    uint8_t chMaxNumber;
+    update_line_t ptTarget;
+} console_print_t;
+
+typedef struct {
+    read_byte_evt_handler_t *ptReadByteEvent;
+    uint8_t chMaxNumber;
+    uint8_t *pchBuffer;
+} console_print_cfg_t;
+
 static POOL(print_str) s_tPrintFreeList;
-static POOL(check_str) s_tCheckFreeList;
-
-
-static void msg_cat_handler(msg_t *ptMSG);
-static void msg_dog_handler(msg_t *ptMSG);
-static void msg_duck_handler(msg_t *ptMSG);
 
 static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE];
 static byte_queue_t s_tFIFOin, s_tFIFOout;
 
-static event_t s_tPrintWorld, s_tPrintApple, s_tPrintOrange, s_tCatHandlerEvent, s_tDogHandlerEvent, s_tDuckHandlerEvent;
-static event_t s_tHandlerEvent,s_tHandlerEventEnd;
-static msg_t s_tCurrentMsg;
-
 static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
-static uint8_t s_chCheckStrPool[256] ALIGN(__alignof__(check_str_t));
+
+static bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG);
+static fsm_rt_t task_console(console_print_t *ptThis);
+static fsm_rt_t update_line(update_line_t *ptThis);
 
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
@@ -90,232 +106,193 @@ int main(void)
     }
 }
 
-void msg_handler(msg_t*ptMSG)
+bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
 {
-    if ((ptMSG != NULL) && (ptMSG->pTarget != NULL)) {
-        SET_EVENT(ptMSG->pTarget);
-        if (WAIT_EVENT(&s_tHandlerEventEnd)) {
-            s_tCurrentMsg = *ptMSG;
-        }
+    enum { 
+        START 
+    };
+    if (       (NULL == ptThis) 
+            || (NULL == ptCFG) 
+            || (NULL == this.ptTarget) 
+            || (NULL == ptCFG->pchBuffer) 
+            || (NULL == ptCFG->ptReadByteEvent) 
+            || (NULL == ptCFG->ptReadByteEvent->fnReadByte)) {
+        return false;
     }
+    this.chState = START;
+    this.chMaxNumber = ptCFG->chMaxNumber;
+    this.pchBuffer = ptCFG->pchBuffer;
+    this.ptReadByteEvent = this.ptReadByteEvent;
+    this.ptTarget.chState = START;
+    return true;
 }
 
-fsm_rt_t task_msg_handler(void) 
+fsm_rt_t task_console(console_print_t *ptThis)
 {
-    static print_str_t *s_ptPrintString;
-    static enum {
-        START,
-        INIT,
-        WAIT_PRINT,
-        PRINT_WORDS
-    } s_tState = START;
-    switch (s_tState) {
-        case START:
-            s_tState = WAIT_PRINT;
-            //break;
-        case WAIT_PRINT:
-            if (WAIT_EVENT(&s_tHandlerEvent)) {
-                s_tState = INIT;
-                //break;
-            } else {
-                break;
-            }
-        case INIT:
-            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tPrintFreeList);
-            if (s_ptPrintString == NULL) {
-                break;
-            }
-            do {
-                static uint8_t s_chBuffer[30];
-                sprintf(s_chBuffer,"%.5s Key is pressed.\r\n",true_key(s_tCurrentMsg.pchMessage));
-                const print_str_cfg_t c_tCFG = {
-                    s_chBuffer,
-                    &s_tFIFOout,
-                    &enqueue_byte
-                };
-                PRINT_STRING.Init(s_ptPrintString, &c_tCFG);
-            } while (0);
-            s_tState = PRINT_WORDS;
-            // break;
-        case PRINT_WORDS:
-            if (fsm_rt_cpl == PRINT_STRING.Print(s_ptPrintString)) {
-                POOL_FREE(print_str, &s_tPrintFreeList, s_ptPrintString);
-                SET_EVENT(&s_tHandlerEventEnd);
-                TASK_RESET_FSM();
-                return fsm_rt_cpl;
-            }
-            break;
-        default:
-            return fsm_rt_err;
-            break;
-    }
-    return fsm_rt_on_going;
-}
-
-static uint8_t* true_key(uint8_t* pchKey)
-{
-    uint8_t *chKey = pchKey + 2;
-    switch (*chKey) {
-        case 0x50:
-            return "F1";
-            break;
-        case 0x51:
-            return "F2";
-            break;
-        case 0x52:
-            return "F3";
-            break;
-        case 0x53:
-            return "F4";
-            break;
-        case 0x54:
-            return "F5";
-            break;
-        case 0x55:
-            return "F6";
-            break;
-        case 0x56:
-            return "F7";
-            break;
-        case 0x57:
-            return "F8";
-            break;
-        case 0x58:
-            return "F9";
-            break;
-        case 0x59:
-            return "F10";
-            break;
-        case 0x5A:
-            return "F11";
-            break;
-        case 0x5B:
-            return "F12";
-            break;
-        case 0x41:
-            return "UP";
-            break;
-        case 0x42:
-            return "DOWN";
-            break;
-        case 0x43:
-            return "RIGHT";
-            break;
-        case 0x44:
-            return "LEFT";
-            break;
-        default:
-            return  pchKey;
-            break;
-    }
-}
-
-static fsm_rt_t task_print_world(void)
-{
-    static enum {
-        START,
-        PRINT_WORLD
-    } s_tState = START;
-    switch (s_tState) {
-        case START:
-            s_tState = START;
-            // break;
-        case PRINT_WORLD:
-            if (fsm_rt_cpl == task_world()) {
-                TASK_RESET_FSM();
-                return fsm_rt_cpl;
-            }
-            break;
-        default:
-            return fsm_rt_err;
-            break;
-    }
-    return fsm_rt_on_going;
-}
-
-static fsm_rt_t task_world(void)
-{
-    static print_str_t *s_ptPrintString;
-    static enum {
-        START,
-        INIT,
-        WAIT_PRINT,
-        PRINT_WORLD
-    } s_tState = START;
-    switch (s_tState) {
-        case START:
-            s_tState = WAIT_PRINT;
-            //break;
-        case WAIT_PRINT:
-            if (WAIT_EVENT(&s_tPrintWorld)) {
-                s_tState = INIT;
-                //break;
-            } else {
-                break;
-            }
-        case INIT:
-            s_ptPrintString = POOL_ALLOCATE(print_str,&s_tPrintFreeList);
-            if (s_ptPrintString == NULL) {
-                break;
-            }
-            do {
-                const print_str_cfg_t c_tCFG = {
-                    "world\r\n",
-                    &s_tFIFOout,
-                    &enqueue_byte
-                };
-                PRINT_STRING.Init(s_ptPrintString, &c_tCFG);
-            } while (0);
-            s_tState = PRINT_WORLD;
-            // break;
-        case PRINT_WORLD:
-            if (fsm_rt_cpl == PRINT_STRING.Print(s_ptPrintString)) {
-                POOL_FREE(print_str,&s_tPrintFreeList,s_ptPrintString);
-                RESET_EVENT(&s_tPrintWorld);
-                TASK_RESET_FSM();
-                return fsm_rt_cpl;
-            }
-            break;
-        default:
-            return fsm_rt_err;
-            break;
-    }
-    return fsm_rt_on_going;
-}
-
-fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop)
-{
-    check_hello_pcb_t *ptThis = (check_hello_pcb_t *)pTarget;
     enum {
         START,
-        CHECK_STRING
+        RESUNME_CURSOR,
+        PRINT_RESUME,
+        READ_BYTE,
+        CHECK_BYTE,
+        CHECK_ENTER,
+        CHECK_DELETE,
+        WRITE_BUFFER,
+        UPDATE_LINE,
+        DELETE_BYTE,
+        CLEAR_CONSOLE,
+        PRINT_CLEAR,
+        INIT_PRINT,
+        PRINT_BUFFER
     };
-    switch (this.chState) {
-        case START:
-            do {
-                const check_str_cfg_t c_tCFG = {
-                    "hello",
-                    ptReadByte
-                };
-                check_string_init(&this.tCheckHello, &c_tCFG);
-            } while (0);
-            this.chState = CHECK_STRING;
-            // break;
-        case CHECK_STRING:
-            *pbRequestDrop = false;
-            if (fsm_rt_cpl == check_string(&this.tCheckHello, pbRequestDrop)) {
-                SET_EVENT(&s_tPrintWorld);
-                TASK_CHECK_RESET_FSM();
-                return fsm_rt_cpl;
-            }
-            break;
-        default:
-            return fsm_rt_err;
-            break;
+    uint8_t *pchTemp;
+    if (NULL == ptThis) {
+        return fsm_rt_err;
     }
-    return fsm_rt_on_going;
+    switch (this.chState)
+    {
+    case START:
+        this.chState = RESUNME_CURSOR;
+        // break;
+    case RESUNME_CURSOR:
+        this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
+        if (this.ptPrintStr == NULL) {
+            break;
+        } else {
+            do {
+                const print_str_cfg_t c_tCFG = {
+                    INIT_CURSOR,
+                    &s_tFIFOout,
+                    &enqueue_byte 
+                };
+                PRINT_STRING.Init(this.ptPrintStr,&c_tCFG);
+            } while (0);
+            this.chState = PRINT_RESUME;
+            // break;
+        }
+    case PRINT_RESUME:
+        if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
+            this.chState = READ_BYTE;
+            // break;
+        } else {
+            break;
+        }
+    case READ_BYTE:
+        if (this.ptReadByteEvent->fnReadByte(
+                                    this.ptReadByteEvent->pTarget,
+                                    &this.chByte)) {
+            this.chState = CHECK_BYTE;
+            // break;
+        } else {
+            break;
+        }
+    case CHECK_BYTE:
+        if(this.chByte>31 && this.chByte <127){
+            this.chState=WRITE_BUFFER;
+            // break;
+        }else
+        {
+            this.chState=CHECK_ENTER;
+            goto GOTO_CHECK_ENTER;
+        }
+    case WRITE_BUFFER:
+        pchTemp=this.pchBuffer+this.chCounter;
+        if(this.chCounter<this.chMaxNumber){
+            *pchTemp++=this.chByte;
+            pchTemp='\0';
+            this.chCounter++;
+        }
+        this.chState=CLEAR_CONSOLE;
+        // break;
+    case CLEAR_CONSOLE:
+    GOTO_CLEAR_CONSOLE:
+        if (this.ptPrintStr == NULL) {
+            break;
+        } else {
+            do {
+                const print_str_cfg_t c_tCFG = {
+                    ERASE_END_OF_LINE,
+                    &s_tFIFOout,
+                    &enqueue_byte 
+                };
+                PRINT_STRING.Init(this.ptPrintStr,&c_tCFG);
+            } while (0);
+            this.chState = PRINT_CLEAR;
+            // break;
+        }
+    case PRINT_CLEAR:
+        if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
+            this.chState = INIT_PRINT;
+            // break;
+        } else {
+            break;
+        }
+    case INIT_PRINT:
+        if (this.ptPrintStr == NULL) {
+            break;
+        } else {
+            do {
+                const print_str_cfg_t c_tCFG = {
+                    this.pchBuffer,
+                    &s_tFIFOout,
+                    &enqueue_byte 
+                };
+                PRINT_STRING.Init(this.ptPrintStr,&c_tCFG);
+            } while (0);
+            this.chState = PRINT_BUFFER;
+            // break;
+        }
+    case PRINT_BUFFER:
+        if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
+            TASK_CONSOLE_RESET_FSM();
+            return fsm_rt_cpl;
+        }
+        break;
+    case CHECK_ENTER:
+    GOTO_CHECK_ENTER:
+        if(this.chByte=='\x0d'){
+            this.chState = UPDATE_LINE;     
+        }else {
+            this.chState = CHECK_DELETE;
+            goto GOTO_CHECK_DELETE;
+        }
+        // break;
+    case UPDATE_LINE:
+        if (fsm_rt_cpl == update_line(this.ptTarget)) {
+            this.chState = CLEAR_CONSOLE;
+            goto GOTO_CLEAR_CONSOLE;
+        }
+        break;
+    case CHECK_DELETE:
+    GOTO_CHECK_DELETE:
+        if (this.chByte == '\x7F') {
+            this.chState = DELETE_BYTE;
+            // break;
+        } else {
+            TASK_CONSOLE_RESET_FSM();
+            break;
+        }
+    case DELETE_BYTE:
+        if(this.chCounter>0){
+            this.chCounter--;
+            pchTemp=this.pchBuffer+this.chCounter;
+            *pchTemp='\0';
+        }else{
+            this.chCounter=0;
+            pchTemp=this.pchBuffer+this.chCounter;
+            *pchTemp='\0';
+        }
+        this.chState=CLEAR_CONSOLE;
+        goto GOTO_CLEAR_CONSOLE;
+    default:
+        break;
+    }
 }
 
+fsm_rt_t update_line(update_line_t *ptThis)
+{
+
+}
 
 fsm_rt_t serial_in_task(void)
 {
