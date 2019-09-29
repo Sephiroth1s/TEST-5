@@ -12,16 +12,18 @@
 #define CURSOR_UP "\033[A"		// 光标上移 1 行
 #define CURSOR_DOWN "\033[B"		// 光标下移 1 行
 #define CURSOR_RIGHT "\033[C"		// 光标右移 1 行
-#define CURSOR_LEFT "\033[D"		// 光标左移 1 行
+#define CURSOR_LEFT "\033[22D"		// 光标左移 1 行
 #define ENTER   "\x0A\x0D"
 #define CLEAR_SCREEN "\033[2J"		// 清屏
 #define ERASE_END_OF_LINE "\033[K"		// 清除从光标到行尾的内容
 #define ERASE_LINE "\033[2K"        //  清楚当前行
-#define INIT_CURSOR "\033[2K>\033[s"		// 清除当前+保存光标位置+'>'符号
-#define SAVE_CURSOR "\033[s"
-#define UNSAVE_CURSOR "\033[u"		// 恢复光标位置
+#define INIT_CURSOR "\033[30D\033[K>"		// 清除当前+移动光标位置+'>'符号
+#define SAVE_CURSOR ">"                     // 恢复'>' 符号
+#define CURSOR_TO_HOME "\033[H"
+#define UNSAVE_CURSOR "\033[30D\033[C"		// 移动光标到第一个字符之后
 #define HIDDEN_CURSOR "\033[?25l"	// 隐藏光标
 #define DISPLAY_CURSOR "\033[?25h"	// 显示光标
+
 #define this (*ptThis)
 #define TASK_CONSOLE_RESET_FSM() \
     do {                         \
@@ -92,13 +94,12 @@ static void system_init(void)
 /*================================= MAIN =====================================*/
 int main(void)
 {
-    static uint8_t s_chBuffer[CONSOLE_BUFFER_SIZE + 1];
+    static uint8_t s_chBuffer[CONSOLE_BUFFER_SIZE + 1] = {'\0'};
     static read_byte_evt_handler_t s_tReadByteEvent = {&dequeue_byte, &s_tFIFOin};
-    const static console_print_cfg_t c_tConsoleCFG = {&s_tReadByteEvent, CONSOLE_BUFFER_SIZE, s_chBuffer};
+    const static console_print_cfg_t c_tConsoleCFG = {&s_tReadByteEvent, UBOUND(s_chBuffer), s_chBuffer};
     static console_print_t s_tConsole;
     system_init();
-    printf("after system init");
-    task_console_init(&s_tConsole,&c_tConsoleCFG);
+    task_console_init(&s_tConsole, &c_tConsoleCFG);
     POOL_INIT(print_str, &s_tPrintFreeList);
     POOL_ADD_HEAP(print_str, &s_tPrintFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
@@ -178,18 +179,10 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case PRINT_RESUME:
             if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
                 POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-                this.chState = CHECK_BYTE;
-                // break;
-            } else {
-                break;
-            }
-        case CHECK_BYTE:
-            if ((this.chByte > 31) && (this.chByte < 127)) {
                 this.chState = READ_BYTE;
                 // break;
             } else {
-                this.chState = CHECK_ENTER;
-                goto GOTO_CHECK_ENTER;
+                break;
             }
         case READ_BYTE:
             if (this.ptReadByteEvent->fnReadByte(this.ptReadByteEvent->pTarget,
@@ -197,9 +190,16 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chState = WRITE_BUFFER;
                 // break;
             } else {
-                // this.chState=INIT_PRINT;
-                // goto GOTO_INIT_PRINT;
-                break;
+                this.chState=INIT_PRINT;
+                goto GOTO_INIT_PRINT;
+            }
+        case CHECK_BYTE:
+            if ((this.chByte > 31) && (this.chByte < 127)) {
+                this.chState = WRITE_BUFFER;
+                // break;
+            } else {
+                this.chState = CHECK_ENTER;
+                goto GOTO_CHECK_ENTER;
             }
         case WRITE_BUFFER:
             pchTemp = this.pchBuffer + this.chCounter;
