@@ -15,14 +15,17 @@
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
 #define CONSOLE_BUFFER_SIZE 50
-
+#define CONSOLE_INPUT_SIZE 50
 extern POOL(print_str) s_tPrintFreeList;
 
-static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE];
-static byte_queue_t s_tFIFOin, s_tFIFOout;
+static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE], s_chByteConsole[CONSOLE_INPUT_SIZE];
+static byte_queue_t s_tFIFOin, s_tFIFOout, s_tFIFOConsolein;
 
 static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
 
+static bool console_input(uint8_t chByte);
+static void msg_handler(msg_t *ptMsg);
+    
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
 
@@ -43,24 +46,70 @@ static void system_init(void)
 int main(void)
 {
     static uint8_t s_chBuffer[CONSOLE_BUFFER_SIZE + 1] = {'\0'};
-    static read_byte_evt_handler_t s_tReadByteEvent = {&dequeue_byte, &s_tFIFOin};
+    static read_byte_evt_handler_t s_tReadByteEvent = {&dequeue_byte, &s_tFIFOConsolein};
     const static console_print_cfg_t c_tConsoleCFG = {&s_tReadByteEvent, UBOUND(s_chBuffer), s_chBuffer, &s_tFIFOout};
     static console_print_t s_tConsole;
+    const static msg_t c_tMSGMap[] = {
+                        {"\x1b\x4f\x50", NULL, &msg_handler},
+                        {"\x1b\x4f\x50", NULL, &msg_handler},
+                        {"\x1b\x4f\x51", NULL, &msg_handler},
+                        {"\x1b\x4f\x52", NULL, &msg_handler},
+                        {"\x1b\x4f\x53", NULL, &msg_handler},
+                        {"\x1b\x4f\x54", NULL, &msg_handler},
+                        {"\x1b\x4f\x55", NULL, &msg_handler},
+                        {"\x1b\x4f\x56", NULL, &msg_handler},
+                        {"\x1b\x4f\x57", NULL, &msg_handler},
+                        {"\x1b\x4f\x58", NULL, &msg_handler},
+                        {"\x1b\x4f\x59", NULL, &msg_handler},
+                        {"\x1b\x4f\x5a", NULL, &msg_handler},
+                        {"\x1b\x4f\x5b", NULL, &msg_handler},
+                        {"\x1b\x4f\x5c", NULL, &msg_handler},
+                        {"\x1b\x5b\x41", NULL, &msg_handler},
+                        {"\x1b\x5b\x42", NULL, &msg_handler},
+                        {"\x1b\x5b\x43", NULL, &msg_handler},
+                        {"\x1b\x5b\x44", NULL, &msg_handler}};
+    const static check_msg_map_cfg_t c_tCheckMSGMapCFG = {
+                                        UBOUND(c_tMSGMap), 
+                                        &s_tFIFOin, 
+                                        c_tMSGMap};
+    static check_msg_map_t s_tCheckMSGMap;
+
+    const static check_agent_t c_tCheckWordsAgent[] = {
+                                {&s_tCheckMSGMap, check_msg_map}};
+    const static check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
+                                        UBOUND(c_tCheckWordsAgent),
+                                        &s_tFIFOin,
+                                        (check_agent_t *)c_tCheckWordsAgent,
+                                        &console_input};
+    static check_use_peek_t s_tCheckWordsUsePeek;
     system_init();
     task_console_init(&s_tConsole, &c_tConsoleCFG);
     POOL_INIT(print_str, &s_tPrintFreeList);
     POOL_ADD_HEAP(print_str, &s_tPrintFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
+    INIT_BYTE_QUEUE(&s_tFIFOConsolein, s_chByteConsole, sizeof(s_chByteConsole));
+    CHECK_MSG_MAP.Init(&s_tCheckMSGMap, &c_tCheckMSGMapCFG);
+    CHECK_USE_PEEK.Init(&s_tCheckWordsUsePeek, &c_tCheckWordsUsePeekCFG);
     LED1_OFF();
     while (1) {
         breath_led();
         task_console(&s_tConsole);
+        CHECK_USE_PEEK.CheckUsePeek(&s_tCheckWordsUsePeek);
         serial_in_task();
         serial_out_task();
     }
 }
 
+bool console_input(uint8_t chByte)
+{
+    if (ENQUEUE_BYTE(&s_tFIFOConsolein, chByte)) {
+        return true;
+    }
+    return false;
+}
+
+void msg_handler(msg_t *ptMsg) {}
 
 fsm_rt_t serial_in_task(void)
 {

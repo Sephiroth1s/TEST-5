@@ -8,6 +8,7 @@
 #include "../../Vsf/release/kernel/beta/vsf/utilities/3rd-party/PLOOC/plooc.h"
 
 typedef fsm_rt_t check_agent_handler_t(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
+typedef bool callback_t(uint8_t chByte);
 
 typedef struct {
     void *pTarget;
@@ -35,6 +36,7 @@ def_class(check_use_peek_t,
         byte_queue_t *ptQueue;
         read_byte_evt_handler_t tReadByte;
         check_agent_t *ptAgents; 
+        callback_t *fnCallback;
     )
 )
 end_def_class(check_use_peek_t)
@@ -43,6 +45,7 @@ typedef struct {
     uint8_t chAgentsNumber;
     byte_queue_t *ptQueue;
     check_agent_t *ptAgents;
+    callback_t *fnCallback;
 } check_use_peek_cfg_t;
 
 def_interface(i_check_use_peek_t)
