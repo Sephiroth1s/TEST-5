@@ -1,15 +1,16 @@
 #include "app_cfg.h"
 #include "./console.h"
 #include "../print_string/print_string.h"
+#include "../check_string/check_string.h"
 
-#define CURSOR_RIGHT "\033[C"       // 光标右移 1 行
-#define ENTER "\x0A\x0D"            // 换行
-#define CLEAR_SCREEN "\033[2J"      // 清屏
-#define ERASE_END_OF_LINE "\033[K"  // 清除从光标到行尾的内容
-#define ERASE_LINE "\033[2K"        //  清楚当前行
-#define NEW_MARK ">"                // 恢复'标识符号
-#define CURSOR_TO_HOME "\033[1~"
-#define MOVE_CURSOR "\033[1~\033[C" // 移动光标到第一个字符之后
+#define CURSOR_RIGHT "\033[C"        // 光标右移 1 行
+#define ENTER "\x0A\x0D"             // 换行
+#define CLEAR_SCREEN "\033[2J"       // 清屏
+#define ERASE_END_OF_LINE "\033[K"   // 清除从光标到行尾的内容
+#define ERASE_LINE "\033[2K"         //  清楚当前行
+#define NEW_MARK ">"                 // 恢复'标识符号
+#define CURSOR_TO_HOME "\033[1~"     // 光标移动到行首
+#define MOVE_CURSOR "\033[1~\033[C"  // 移动光标到第一个字符之后
 
 #define this (*ptThis)
 #define TASK_CONSOLE_RESET_FSM() \
@@ -60,7 +61,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
     if (NULL == ptThis) {
         return fsm_rt_err;
     }
-    if((NULL== this.ptReadByteEvent)|| (NULL==this.pchBuffer)){
+    if ((NULL == this.ptReadByteEvent) || (NULL == this.pchBuffer)) {
         return fsm_rt_err;
     }
     switch (this.chState) {
@@ -97,7 +98,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
             }
         case APPEND_BYTE:
         GOTO_APPEND_BYTE:
-            if(print_str_output_byte(this.pOutputTarget,this.chByte)){
+            if (print_str_output_byte(this.pOutputTarget, this.chByte)) {
                 TASK_CONSOLE_RESET_FSM();
                 return fsm_rt_cpl;
             }
