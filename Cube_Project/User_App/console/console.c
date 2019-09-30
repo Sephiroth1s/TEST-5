@@ -4,11 +4,8 @@
 #include "../check_string/check_string.h"
 
 #define CURSOR_RIGHT "\033[C"        // 光标右移 1 行
-#define ENTER "\x0A\x0D"             // 换行
-#define CLEAR_SCREEN "\033[2J"       // 清屏
-#define ERASE_END_OF_LINE "\033[K"   // 清除从光标到行尾的内容
+#define ENTER "\x0A\x0D>"             // 换行并输出标识符
 #define ERASE_LINE "\033[2K"         //  清楚当前行
-#define NEW_MARK ">"                 // 恢复'标识符号
 #define CURSOR_TO_HOME "\033[1~"     // 光标移动到行首
 #define MOVE_CURSOR "\033[1~\033[C"  // 移动光标到第一个字符之后
 
@@ -36,9 +33,7 @@ bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
     this.chMaxNumber = ptCFG->chMaxNumber;
     this.pchBuffer = ptCFG->pchBuffer;
     this.ptReadByteEvent = ptCFG->ptReadByteEvent;
-    this.ptUpdateLineTarget.chState = START;
     this.pOutputTarget = ptCFG->pOutputTarget;
-    this.ptUpdateLineTarget.pOutputTarget = ptCFG->pOutputTarget;
     return true;
 }
 
@@ -54,6 +49,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
         APPEND_BYTE,
         UPDATE_LINE,
         DELETE_BYTE,
+        PRINT_ENTER,
         INIT_PRINT_LINE,
         PRINT_BUFFER
     };
@@ -99,8 +95,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case APPEND_BYTE:
         GOTO_APPEND_BYTE:
             if (print_str_output_byte(this.pOutputTarget, this.chByte)) {
-                TASK_CONSOLE_RESET_FSM();
-                return fsm_rt_cpl;
+                this.chState = READ_BYTE;
             }
             break;
         case CHECK_DELETE:
@@ -133,10 +128,27 @@ fsm_rt_t task_console(console_print_t *ptThis)
             }
             // break;
         case UPDATE_LINE:
-            if (fsm_rt_cpl == update_line(&this.ptUpdateLineTarget)) {
-                this.chState = INIT_PRINT_LINE;
-                // break
+            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
+            if (this.ptPrintStr == NULL) {
+                break;
             } else {
+                do {
+                    const print_str_cfg_t c_tCFG = {
+                        ENTER, 
+                        this.pOutputTarget,
+                        &enqueue_byte
+                    };
+                    PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
+                } while (0);
+                this.chState = PRINT_ENTER;
+                // break;
+            }
+        case PRINT_ENTER:
+            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
+                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
+                this.chState = INIT_PRINT_LINE;
+                // break;
+            } else{
                 break;
             }
         case INIT_PRINT_LINE:
@@ -160,126 +172,6 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
                 TASK_CONSOLE_RESET_FSM();
                 return fsm_rt_cpl;
-            }
-            break;
-        default:
-            return fsm_rt_err;
-            break;
-    }
-    return fsm_rt_on_going;
-}
-
-fsm_rt_t update_line(update_line_t *ptThis)
-{
-    enum {
-        START,
-        RESUME_CURSOR,
-        PRINT_RESUME,
-        CLEAR_TO_END,
-        PRINT_CLEAR,
-        INIT_ENTER,
-        PRINT_ENTER,
-        NEW_CURSOR,
-        PRINT_MARK
-    };
-    switch (this.chState) {
-        case START:
-            this.chState = RESUME_CURSOR;
-            // break;
-        case RESUME_CURSOR:
-            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
-            if (this.ptPrintStr == NULL) {
-                break;
-            } else {
-                do {
-                    const print_str_cfg_t c_tCFG = {
-                        MOVE_CURSOR, 
-                        this.pOutputTarget,
-                        &enqueue_byte
-                    };
-                    PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
-                } while (0);
-                this.chState = PRINT_RESUME;
-                // break;
-            }
-        case PRINT_RESUME:
-            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
-                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-                this.chState = CLEAR_TO_END;
-                // break;
-            } else {
-                break;
-            }
-        case CLEAR_TO_END:
-            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
-            if (this.ptPrintStr == NULL) {
-                break;
-            } else {
-                do {
-                    const print_str_cfg_t c_tCFG = {
-                        ERASE_END_OF_LINE, 
-                        this.pOutputTarget,
-                        &enqueue_byte
-                    };
-                    PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
-                } while (0);
-                this.chState = PRINT_CLEAR;
-                // break;
-            }
-        case PRINT_CLEAR:
-            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
-                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-                this.chState = INIT_ENTER;
-                // break;
-            } else {
-                break;
-            }
-        case INIT_ENTER:
-            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
-            if (this.ptPrintStr == NULL) {
-                break;
-            } else {
-                do {
-                    const print_str_cfg_t c_tCFG = {
-                        ENTER, 
-                        this.pOutputTarget,
-                        &enqueue_byte
-                    };
-                    PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
-                } while (0);
-                this.chState = PRINT_ENTER;
-                // break;
-            }
-        case PRINT_ENTER:
-            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
-                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-                this.chState = NEW_CURSOR;
-                // break;
-            } else {
-                break;
-            }
-        case NEW_CURSOR:
-            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
-            if (this.ptPrintStr == NULL) {
-                break;
-            } else {
-                do {
-                    const print_str_cfg_t c_tCFG = {
-                        NEW_MARK, 
-                        this.pOutputTarget,
-                        &enqueue_byte
-                    };
-                    PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
-                } while (0);
-                this.chState = PRINT_MARK;
-                // break;
-            }
-        case PRINT_MARK:
-            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
-                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-                TASK_CONSOLE_RESET_FSM();
-                return fsm_rt_cpl;
-                // break;
             }
             break;
         default:

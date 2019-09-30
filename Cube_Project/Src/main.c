@@ -14,7 +14,7 @@
 
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
-#define CONSOLE_BUFFER_SIZE 20
+#define CONSOLE_BUFFER_SIZE 50
 
 extern POOL(print_str) s_tPrintFreeList;
 

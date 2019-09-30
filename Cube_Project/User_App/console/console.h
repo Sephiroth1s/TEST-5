@@ -4,13 +4,6 @@
 #include "../print_string/print_string.h"
 #include "../check_string/check_string.h"
 
-typedef struct
-{
-    uint8_t chState;
-    print_str_t *ptPrintStr;
-    void *pOutputTarget;
-}update_line_t;
-
 typedef struct {
     uint8_t chState;
     read_byte_evt_handler_t *ptReadByteEvent;
@@ -20,7 +13,6 @@ typedef struct {
     uint8_t chByte;
     uint8_t chCounter;
     uint8_t chMaxNumber;
-    update_line_t ptUpdateLineTarget;
 } console_print_t;
 
 typedef struct {
@@ -33,6 +25,5 @@ typedef struct {
 
 extern bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG);
 extern fsm_rt_t task_console(console_print_t *ptThis);
-extern fsm_rt_t update_line(update_line_t *ptThis);
 
 #endif
