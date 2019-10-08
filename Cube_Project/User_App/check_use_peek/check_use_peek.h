@@ -36,7 +36,7 @@ def_class(check_use_peek_t,
         byte_queue_t *ptQueue;
         read_byte_evt_handler_t tReadByte;
         check_agent_t *ptAgents; 
-        callback_t *fnCallback;
+        callback_t *fnOnDropByte;
     )
 )
 end_def_class(check_use_peek_t)
@@ -45,7 +45,7 @@ typedef struct {
     uint8_t chAgentsNumber;
     byte_queue_t *ptQueue;
     check_agent_t *ptAgents;
-    callback_t *fnCallback;
+    callback_t *fnOnDropByte;
 } check_use_peek_cfg_t;
 
 def_interface(i_check_use_peek_t)

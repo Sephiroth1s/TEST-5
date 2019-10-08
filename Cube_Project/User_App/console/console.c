@@ -6,7 +6,6 @@
 #define CURSOR_RIGHT "\033[C"        // 光标右移 1 行
 #define ENTER "\x0A\x0D"             // 换行并输出标识符
 #define ERASE_LINE "\033[2K"         //  清楚当前行
-#define ENTER_AND_NEXT "\x0A\x0D>"   // 换行并且输出新行输入标识符
 
 #define this (*ptThis)
 #define TASK_CONSOLE_RESET_FSM() \
@@ -44,6 +43,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
 {
     enum {
         START,
+        PRINT_START_FLAG,
         READ_BYTE,
         CHECK_BYTE,
         CHECK_ENTER,
@@ -54,8 +54,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
         DELETE_BYTE,
         PRINT_ENTER,
         PROCESSING_STRING,
-        NEXT_INPUT,
-        PRINT_NEXT
+        END_BUFFER_ENTER,
+        PRINT_END_ENTER
     };
     uint8_t *pchTemp;
     if (NULL == ptThis) {
@@ -66,8 +66,19 @@ fsm_rt_t task_console(console_print_t *ptThis)
     }
     switch (this.chState) {
         case START:
-            this.chState = READ_BYTE;
+            this.chCounter = 0;
+            *this.pchBuffer = '\0';
+            this.chState = PRINT_START_FLAG;
             // break;
+        case PRINT_START_FLAG:
+            if (print_str_output_byte(this.pOutputTarget, '>')) {
+                this.chCounter = 0;
+                *this.pchBuffer = '\0';
+                this.chState = READ_BYTE;
+                // break;
+            } else {
+                break;
+            }
         case READ_BYTE:
             if (this.ptReadByteEvent->fnReadByte(this.ptReadByteEvent->pTarget,
                                                  &this.chByte)) {
@@ -93,7 +104,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chState = APPEND_BYTE;
                 // break;
             } else {
-                TASK_CONSOLE_RESET_FSM();
+                this.chState = READ_BYTE;
                 break;
             }
         case APPEND_BYTE:
@@ -108,7 +119,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chState = DELETE_BYTE;
                 // break;
             } else {
-                TASK_CONSOLE_RESET_FSM();
+                this.chState = READ_BYTE;
                 break;
             }
         case DELETE_BYTE:
@@ -119,7 +130,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chState = APPEND_BYTE;
                 goto GOTO_APPEND_BYTE;
             } else {
-                TASK_CONSOLE_RESET_FSM();
+                this.chState = READ_BYTE;
                 break;
             }
         case CHECK_ENTER:
@@ -159,30 +170,30 @@ fsm_rt_t task_console(console_print_t *ptThis)
             if (fsm_rt_cpl == this.ptProcessingString->fnProcessingString(
                                 this.ptProcessingString->pTarget, 
                                 this.pchBuffer)) {
-                this.chState = NEXT_INPUT;
+                this.chState = END_BUFFER_ENTER;
                 this.chCounter =0;
                 *this.pchBuffer = '\0';
                 // break;
             } else {
                 break;
             }
-        case NEXT_INPUT:
+        case END_BUFFER_ENTER:
             this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
             if (this.ptPrintStr == NULL) {
                 break;
             } else {
                 do {
                     const print_str_cfg_t c_tCFG = {
-                        ENTER_AND_NEXT, 
+                        ENTER, 
                         this.pOutputTarget,
                         &enqueue_byte
                     };
                     PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
                 } while (0);
-                this.chState = PRINT_NEXT;
+                this.chState = PRINT_END_ENTER;
                 // break;
             }
-        case PRINT_NEXT:
+        case PRINT_END_ENTER:
             if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
                 POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
                 TASK_CONSOLE_RESET_FSM();

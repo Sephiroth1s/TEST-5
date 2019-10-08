@@ -43,7 +43,7 @@ bool check_use_peek_init(check_use_peek_t *ptObj, const check_use_peek_cfg_t *pt
     this.ptAgents = ptCFG->ptAgents;
     this.tReadByte.fnReadByte = (read_byte_t *)&peek_byte_queue;
     this.tReadByte.pTarget = ptCFG->ptQueue;
-    this.fnCallback = ptCFG->fnCallback;
+    this.fnOnDropByte = ptCFG->fnOnDropByte;
     return true;
 }
 
@@ -99,8 +99,8 @@ fsm_rt_t task_check_use_peek(check_use_peek_t *ptObj)
                 do {
                     uint8_t chByteDrop;
                     DEQUEUE_BYTE(this.ptQueue, &chByteDrop);
-                    if(this.fnCallback != NULL) {
-                        this.fnCallback(chByteDrop);
+                    if(this.fnOnDropByte != NULL) {
+                        this.fnOnDropByte(chByteDrop);
                     }
                 } while (0);
                 RESET_PEEK_BYTE(this.ptQueue);
