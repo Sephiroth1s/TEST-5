@@ -31,7 +31,7 @@ typedef struct {
     void *pOutputTarget;
 } console_print_cfg_t;
 
-extern bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG);
+extern bool task_console_init(console_print_t *ptThis, console_print_cfg_t *ptCFG);
 extern fsm_rt_t task_console(console_print_t *ptThis);
 
 #endif

@@ -6,14 +6,14 @@
 #define CURSOR_RIGHT "\033[C"        // 光标右移 1 行
 #define ENTER "\x0A\x0D"             // 换行并输出标识符
 #define ERASE_LINE "\033[2K"         //  清楚当前行
-#define CURSOR_TO_HOME "\033[1~"     // 光标移动到行首
-#define MOVE_CURSOR "\033[1~\033[C"  // 移动光标到第一个字符之后
-#define ENTER_AND_NEXT "\x0A\x0D>"
+#define ENTER_AND_NEXT "\x0A\x0D>"   // 换行并且输出新行输入标识符
+
 #define this (*ptThis)
 #define TASK_CONSOLE_RESET_FSM() \
     do {                         \
         this.chState = START;    \
     } while (0);
+
 POOL(print_str) s_tPrintFreeList;
 
 bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
@@ -36,7 +36,7 @@ bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
     this.pchBuffer = ptCFG->pchBuffer;
     this.ptReadByteEvent = ptCFG->ptReadByteEvent;
     this.pOutputTarget = ptCFG->pOutputTarget;
-    this.ptProcessingString =ptCFG->ptProcessingString;
+    this.ptProcessingString = ptCFG->ptProcessingString;
     return true;
 }
 

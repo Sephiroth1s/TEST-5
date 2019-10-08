@@ -20,6 +20,7 @@
 #define OUTPUT_FIFO_SIZE 100
 #define CONSOLE_BUFFER_SIZE 50
 #define CONSOLE_INPUT_SIZE 50
+
 typedef struct print_buffer_t print_buffer_t;
 struct print_buffer_t{
     uint8_t chState;
@@ -60,7 +61,7 @@ int main(void)
     enum { 
         START 
     };
-    static print_buffer_t s_tPrintBufferTarget={START,&s_tFIFOout};
+    static print_buffer_t s_tPrintBufferTarget = {START, &s_tFIFOout};
     static uint8_t s_chBuffer[CONSOLE_BUFFER_SIZE + 1] = {'\0'};
     const static read_byte_evt_handler_t c_tReadByteEvent = {&dequeue_byte, &s_tFIFOConsolein};
     const static processing_string_evt_handler_t c_tProcessingString = {&processing_string, &s_tPrintBufferTarget};
