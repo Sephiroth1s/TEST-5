@@ -11,11 +11,22 @@
     do {                       \
         this.chState = START;  \
     } while (0);
+#define TASK_CONSOLE_RESET_FSM() \
+    do {                       \
+        this.chState = START;  \
+    } while (0);
 
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
 #define CONSOLE_BUFFER_SIZE 50
 #define CONSOLE_INPUT_SIZE 50
+typedef struct print_buffer_t print_buffer_t;
+struct print_buffer_t{
+    uint8_t chState;
+    void *pTarget;
+    print_str_t *ptPrintStr;
+};
+
 extern POOL(print_str) s_tPrintFreeList;
 
 static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE], s_chByteConsole[CONSOLE_INPUT_SIZE];
@@ -24,6 +35,7 @@ static byte_queue_t s_tFIFOin, s_tFIFOout, s_tFIFOConsolein;
 static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
 
 static bool console_input(uint8_t chByte);
+static fsm_rt_t processing_string(print_buffer_t *ptThis, uint8_t *pchBuffer);
 static void msg_handler(msg_t *ptMsg);
     
 extern bool serial_out(uint8_t chByte);
@@ -45,29 +57,40 @@ static void system_init(void)
 /*================================= MAIN =====================================*/
 int main(void)
 {
+    enum { 
+        START 
+    };
+    static print_buffer_t s_tPrintBufferTarget={START,&s_tFIFOout};
     static uint8_t s_chBuffer[CONSOLE_BUFFER_SIZE + 1] = {'\0'};
-    static read_byte_evt_handler_t s_tReadByteEvent = {&dequeue_byte, &s_tFIFOConsolein};
-    const static console_print_cfg_t c_tConsoleCFG = {&s_tReadByteEvent, UBOUND(s_chBuffer), s_chBuffer, &s_tFIFOout};
+    const static read_byte_evt_handler_t c_tReadByteEvent = {&dequeue_byte, &s_tFIFOConsolein};
+    const static processing_string_evt_handler_t c_tProcessingString = {&processing_string, &s_tPrintBufferTarget};
+    const static console_print_cfg_t c_tConsoleCFG = {&c_tReadByteEvent, &c_tProcessingString, UBOUND(s_chBuffer), s_chBuffer, &s_tFIFOout};
     static console_print_t s_tConsole;
     const static msg_t c_tMSGMap[] = {
-                        {"\x1b\x4f\x50", NULL, &msg_handler},
-                        {"\x1b\x4f\x50", NULL, &msg_handler},
-                        {"\x1b\x4f\x51", NULL, &msg_handler},
-                        {"\x1b\x4f\x52", NULL, &msg_handler},
-                        {"\x1b\x4f\x53", NULL, &msg_handler},
-                        {"\x1b\x4f\x54", NULL, &msg_handler},
-                        {"\x1b\x4f\x55", NULL, &msg_handler},
-                        {"\x1b\x4f\x56", NULL, &msg_handler},
-                        {"\x1b\x4f\x57", NULL, &msg_handler},
-                        {"\x1b\x4f\x58", NULL, &msg_handler},
-                        {"\x1b\x4f\x59", NULL, &msg_handler},
-                        {"\x1b\x4f\x5a", NULL, &msg_handler},
-                        {"\x1b\x4f\x5b", NULL, &msg_handler},
-                        {"\x1b\x4f\x5c", NULL, &msg_handler},
-                        {"\x1b\x5b\x41", NULL, &msg_handler},
-                        {"\x1b\x5b\x42", NULL, &msg_handler},
-                        {"\x1b\x5b\x43", NULL, &msg_handler},
-                        {"\x1b\x5b\x44", NULL, &msg_handler}};
+                        {"\x1b\x4f\x50", NULL, NULL},
+                        {"\x1b\x4f\x50", NULL, NULL},
+                        {"\x1b\x4f\x51", NULL, NULL},
+                        {"\x1b\x4f\x52", NULL, NULL},
+                        {"\x1b\x4f\x53", NULL, NULL},
+                        {"\x1b\x4f\x54", NULL, NULL},
+                        {"\x1b\x4f\x55", NULL, NULL},
+                        {"\x1b\x4f\x56", NULL, NULL},
+                        {"\x1b\x4f\x57", NULL, NULL},
+                        {"\x1b\x4f\x58", NULL, NULL},
+                        {"\x1b\x4f\x59", NULL, NULL},
+                        {"\x1b\x4f\x5a", NULL, NULL},
+                        {"\x1b\x4f\x5b", NULL, NULL},
+                        {"\x1b\x4f\x5c", NULL, NULL},
+                        {"\x1b\x5b\x41", NULL, NULL},
+                        {"\x1b\x5b\x42", NULL, NULL},
+                        {"\x1b\x5b\x43", NULL, NULL},
+                        {"\x1b\x5b\x44", NULL, NULL},
+                        {"\x1b\x5B\x31\x7E", NULL, NULL},
+                        {"\x1b\x5B\x32\x7E", NULL, NULL},
+                        {"\x1b\x5B\x33\x7E", NULL, NULL},
+                        {"\x1b\x5B\x34\x7E", NULL, NULL},
+                        {"\x1b\x5B\x35\x7E", NULL, NULL},
+                        {"\x1b\x5B\x36\x7E", NULL, NULL}};
     const static check_msg_map_cfg_t c_tCheckMSGMapCFG = {
                                         UBOUND(c_tMSGMap), 
                                         &s_tFIFOin, 
@@ -109,7 +132,47 @@ bool console_input(uint8_t chByte)
     return false;
 }
 
-void msg_handler(msg_t *ptMsg) {}
+fsm_rt_t processing_string(print_buffer_t *ptThis, uint8_t *pchBuffer)
+{
+   enum { 
+        START,
+        INIT_PRINT,
+        PRINT_BUFFER
+    };
+    switch (this.chState)
+    {
+    case START:
+        this.chState = INIT_PRINT;
+        //break;
+    case INIT_PRINT:
+        this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
+        if (this.ptPrintStr == NULL) {
+            break;
+        } else {
+            do {
+                const print_str_cfg_t c_tCFG = {
+                    pchBuffer, 
+                    this.pTarget,
+                    &enqueue_byte
+                };
+                PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
+            } while (0);
+            this.chState = PRINT_BUFFER;
+            // break;
+        }
+    case PRINT_BUFFER:
+        if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
+            POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
+            TASK_CONSOLE_RESET_FSM();
+            return fsm_rt_cpl;
+        }
+        break;
+    default:
+        return fsm_rt_err;
+        break;
+    }
+    return fsm_rt_on_going;
+}
 
 fsm_rt_t serial_in_task(void)
 {

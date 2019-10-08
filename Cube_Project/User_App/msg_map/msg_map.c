@@ -107,7 +107,9 @@ fsm_rt_t check_msg_map(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool 
             break;
         case MSG_HANLDER:
         GOTO_MSG_HANLDER:
-            (this.ptMSGMap[this.chMSGCount]).fnHandler(&this.ptMSGMap[this.chMSGCount]);
+            if(NULL != (this.ptMSGMap[this.chMSGCount]).fnHandler){
+                (this.ptMSGMap[this.chMSGCount]).fnHandler(&this.ptMSGMap[this.chMSGCount]);
+            }
             TASK_RESET_FSM();
             return fsm_rt_cpl;
             break;
