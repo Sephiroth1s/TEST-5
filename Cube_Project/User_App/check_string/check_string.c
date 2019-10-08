@@ -54,8 +54,8 @@ fsm_rt_t check_string(check_str_t *ptThis, bool *pbIsRequestDrop)
             }
             // break;
         case READ_CHAR:
-            // printf("readchar-\r\n");
             if (this.ptReadByteEvent->fnReadByte(this.ptReadByteEvent->pTarget, &this.chCurrentByte)) {
+                printf("readchar successful\r\n");
                 this.chState = CHECK_WORLD;
                 // break;
             } else {
@@ -63,7 +63,9 @@ fsm_rt_t check_string(check_str_t *ptThis, bool *pbIsRequestDrop)
                 break;
             }
         case CHECK_WORLD:
+            printf("hello:%c\tread:%c\r\n",*this.pchString,this.chCurrentByte);
             if (*this.pchString == this.chCurrentByte) {
+                printf("check_world_successful\r\n");
                 this.pchString++;
                 this.chState = CHECK_END;
                 goto GOTO_CHECK_END;

@@ -23,8 +23,10 @@ bool enqueue_byte(byte_queue_t* ptThis, uint8_t chByte)
 bool dequeue_byte(byte_queue_t* ptThis, uint8_t* pchByte)
 {
     if ((ptThis == NULL) || (is_byte_queue_empty(ptThis))) {
+        // printf("no byte to read\r\n");
         return false;
     }
+    printf("read byte with queue\r\n");
     *pchByte = this.pchBuffer[this.hwHead];
     this.hwHead++;
     if (this.hwHead >= this.hwSize) {

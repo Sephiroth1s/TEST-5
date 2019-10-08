@@ -105,6 +105,9 @@ static void system_init(void)
 /*================================= MAIN =====================================*/
 int main(void)
 {
+    enum{
+        START
+    };
     static const check_agent_t c_tCheckWordsAgent[] = {
                                 {&s_tCheckHelloPCB, check_hello}};
     static const check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
@@ -112,7 +115,8 @@ int main(void)
                                         &s_tFIFOin,
                                         (check_agent_t *)c_tCheckWordsAgent};
     static check_use_peek_t s_tCheckWordsUsePeek;
-
+    static check_hello_pcb_t s_tHelloTest={START};
+    static read_byte_evt_handler_t s_Read={&dequeue_byte,&s_tFIFOin};
     system_init();
     POOL_INIT(print_str, &s_tPrintFreeList);
     POOL_INIT(check_str, &s_tCheckFreeList);
@@ -127,10 +131,11 @@ int main(void)
     ENQUEUE_BYTE(&s_tFIFOin, 'l');
     ENQUEUE_BYTE(&s_tFIFOin, 'l');
     ENQUEUE_BYTE(&s_tFIFOin, 'o');
+    uint8_t s_tchDrop;
     LED1_OFF();
     while (1) {
         breath_led();
-        check_hello();
+        check_hello(&s_tHelloTest,&s_Read,&s_tchDrop);
         task_print_world();
         serial_in_task();
         serial_out_task();
@@ -219,12 +224,16 @@ fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *p
     };
     switch (this.chState) {
         case START:
+            // if (this.tCheckHello != NULL) {
+            //     goto GOTO_AFTER_INIT;
+            // }
             // this.tCheckHello = POOL_ALLOCATE(check_str, &s_tCheckFreeList);
             // if (this.tCheckHello == NULL) {
             //     printf("check allocate fault\r\n");
             //     break;
             // }
             // printf("this.checkHello:%p\r\n",this.tCheckHello);
+            // GOTO_AFTER_INIT:
             do {
                 const check_str_cfg_t c_tCFG = {
                     "hello",
@@ -232,6 +241,7 @@ fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *p
                 };
                 check_string_init(&this.tCheckHello, &c_tCFG);
             } while (0);
+            printf("init check\r\n");
             this.chState = CHECK_STRING;
             // break;
         case CHECK_STRING:
@@ -241,6 +251,7 @@ fsm_rt_t check_hello(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *p
                 TASK_CHECK_RESET_FSM();
                 // printf("check hello cpl\r\n");
                 // POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckHello);
+                // this.tCheckHello=NULL;
                 return fsm_rt_cpl;
             }
             // POOL_FREE(check_str, &s_tCheckFreeList, this.tCheckHello);
