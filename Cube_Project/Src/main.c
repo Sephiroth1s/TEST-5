@@ -63,12 +63,12 @@ int main(void)
     };
     static print_buffer_t s_tPrintBufferTarget = {START, &s_tFIFOout};
     static uint8_t s_chBuffer[CONSOLE_BUFFER_SIZE + 1] = {'\0'};
+    static uint8_t s_chLastBuffer[UBOUND(s_chBuffer)] = {'\0'};
     const static read_byte_evt_handler_t c_tReadByteEvent = {&dequeue_byte, &s_tFIFOConsolein};
     const static processing_string_evt_handler_t c_tProcessingString = {&processing_string, &s_tPrintBufferTarget};
     const static console_print_cfg_t c_tConsoleCFG = {&c_tReadByteEvent, &c_tProcessingString, UBOUND(s_chBuffer), s_chBuffer, &s_tFIFOout};
     static console_print_t s_tConsole;
     const static msg_t c_tMSGMap[] = {
-                        {"\x1b\x4f\x50", NULL, NULL},
                         {"\x1b\x4f\x50", NULL, NULL},
                         {"\x1b\x4f\x51", NULL, NULL},
                         {"\x1b\x4f\x52", NULL, NULL},
