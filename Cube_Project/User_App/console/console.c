@@ -2,6 +2,7 @@
 #include "./console.h"
 #include "../print_string/print_string.h"
 #include "../check_string/check_string.h"
+#include "../event/event.h"
 
 #define CURSOR_RIGHT "\033[C"        // 光标右移 1 行
 #define ENTER "\x0A\x0D"             // 换行并输出标识符
@@ -22,7 +23,10 @@ bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
     };
     if (       (NULL == ptThis) 
             || (NULL == ptCFG) 
-            || (NULL == ptCFG->pchBuffer) 
+            || (NULL == ptCFG->ptRepeatByte)
+            || (NULL == ptCFG->ptRepeatLine)
+            || (NULL == ptCFG->pchLastBuffer)
+            || (NULL == ptCFG->pchCurrentBuffer) 
             || (NULL == ptCFG->pOutputTarget)
             || (NULL == ptCFG->ptReadByteEvent) 
             || (NULL == ptCFG->ptReadByteEvent->fnReadByte)
@@ -32,7 +36,11 @@ bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
     }
     this.chState = START;
     this.chMaxNumber = ptCFG->chMaxNumber;
-    this.pchBuffer = ptCFG->pchBuffer;
+    this.chLastCounter = 0;
+    this.pchCurrentBuffer = ptCFG->pchCurrentBuffer;
+    this.pchLastBuffer = ptCFG->pchLastBuffer;
+    this.ptRepeatByte = ptCFG->ptRepeatByte;
+    this.ptRepeatLine = ptCFG->ptRepeatLine;
     this.ptReadByteEvent = ptCFG->ptReadByteEvent;
     this.pOutputTarget = ptCFG->pOutputTarget;
     this.ptProcessingString = ptCFG->ptProcessingString;
@@ -44,12 +52,22 @@ fsm_rt_t task_console(console_print_t *ptThis)
     enum {
         START,
         PRINT_START_FLAG,
+        KEY_F1,
+        KEY_F3,
+        CHECK_CURRENT_BYTE_F1,
+        CHECK_CURRENT_BYTE_F3,
+        IS_BEYOND_F1,
+        IS_BEYOND_F3,
+        REPEAT_BYTE,
+        REPEAT_LINE,
+        PRINT_LAST_CMD,
         READ_BYTE,
         CHECK_BYTE,
         CHECK_ENTER,
         CHECK_DELETE,
         WRITE_BUFFER,
         APPEND_BYTE,
+        IS_EMPTY,
         UPDATE_LINE,
         DELETE_BYTE,
         PRINT_ENTER,
@@ -61,25 +79,111 @@ fsm_rt_t task_console(console_print_t *ptThis)
     if (NULL == ptThis) {
         return fsm_rt_err;
     }
-    if ((NULL == this.ptReadByteEvent) || (NULL == this.pchBuffer)) {
+    if ((NULL == this.ptReadByteEvent) || (NULL == this.pchCurrentBuffer)) {
         return fsm_rt_err;
     }
     switch (this.chState) {
         case START:
-            this.chCounter = 0;
-            *this.pchBuffer = '\0';
+            this.chCurrentCounter = 0;
+            *this.pchCurrentBuffer = '\0';     //
             this.chState = PRINT_START_FLAG;
             // break;
         case PRINT_START_FLAG:
             if (print_str_output_byte(this.pOutputTarget, '>')) {
-                this.chCounter = 0;
-                *this.pchBuffer = '\0';
-                this.chState = READ_BYTE;
+                this.chCurrentCounter = 0;
+                *this.pchCurrentBuffer = '\0';
+                this.chState = KEY_F1;
                 // break;
             } else {
                 break;
             }
+        case KEY_F1:
+        EDIT_LOOP_START:
+            if (WAIT_EVENT(this.ptRepeatByte)) {
+                this.chState = CHECK_CURRENT_BYTE_F1;
+            } else {
+                this.chState = KEY_F3;
+                goto GOTO_KEY_F3;
+            }
+            // break;
+        case CHECK_CURRENT_BYTE_F1:
+            if (this.chLastCounter > this.chCurrentCounter) {
+                this.chLastCounter = this.chCurrentCounter;
+            }
+            this.chState = IS_BEYOND_F1;
+            // break;
+        case IS_BEYOND_F1:
+            if (this.chLastCounter >= this.chLastMaxNumber) {
+                this.chState = READ_BYTE;
+                goto READ_BYTE_START;
+            }
+            this.chState = REPEAT_BYTE;
+            // break;
+        case REPEAT_BYTE:
+            do {
+                uint8_t *pchLastTemp;
+                pchLastTemp = this.pchLastBuffer + this.chLastCounter;
+                if (print_str_output_byte(this.pOutputTarget, *pchLastTemp)) {
+                    pchTemp = this.pchCurrentBuffer + this.chCurrentCounter;
+                    *pchTemp++ = *pchLastTemp;
+                    *pchTemp = '\0';
+                    this.chLastCounter++;
+                    this.chCurrentCounter = this.chLastCounter;
+                    this.chState = KEY_F3;
+                }
+            } while (0);
+            break;
+        case KEY_F3:
+        GOTO_KEY_F3:
+            if (WAIT_EVENT(this.ptRepeatLine)) {
+                this.chState = CHECK_CURRENT_BYTE_F3;
+            } else {
+                this.chState = READ_BYTE;
+                goto READ_BYTE_START;
+            }
+            // break;
+        case CHECK_CURRENT_BYTE_F3:
+            if (this.chLastCounter > this.chCurrentCounter) {
+                this.chLastCounter = this.chCurrentCounter;
+            }
+            this.chState = IS_BEYOND_F3;
+            // break;
+        case IS_BEYOND_F3:
+            if (this.chLastCounter >= this.chLastMaxNumber) {
+                this.chState = READ_BYTE;
+                goto READ_BYTE_START;
+            }
+            this.chState = REPEAT_LINE;
+            // break;
+        case REPEAT_LINE:
+            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
+            if (this.ptPrintStr == NULL) {
+                break;
+            } else {
+                do {
+                    const print_str_cfg_t c_tCFG = {
+                        this.pchLastBuffer + this.chLastCounter, 
+                        this.pOutputTarget,
+                        &enqueue_byte
+                    };
+                    PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
+                } while (0);
+                this.chState = PRINT_LAST_CMD;
+                // break;
+            }
+        case PRINT_LAST_CMD:
+            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
+                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
+                memcpy(this.pchCurrentBuffer + this.chCurrentCounter,
+                       this.pchLastBuffer + this.chCurrentCounter,
+                       this.chLastMaxNumber - this.chCurrentCounter);
+                this.chLastCounter = this.chLastMaxNumber;
+                this.chCurrentCounter = this.chLastCounter;
+                this.chState = READ_BYTE;
+            } 
+            break;
         case READ_BYTE:
+        READ_BYTE_START:
             if (this.ptReadByteEvent->fnReadByte(this.ptReadByteEvent->pTarget,
                                                  &this.chByte)) {
                 this.chState = CHECK_BYTE;
@@ -96,11 +200,11 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 goto GOTO_CHECK_ENTER;
             }
         case WRITE_BUFFER:
-            pchTemp = this.pchBuffer + this.chCounter;
-            if (this.chCounter < this.chMaxNumber) {
+            pchTemp = this.pchCurrentBuffer + this.chCurrentCounter;
+            if (this.chCurrentCounter < this.chMaxNumber) {
                 *pchTemp++ = this.chByte;
                 *pchTemp = '\0';
-                this.chCounter++;
+                this.chCurrentCounter++;
                 this.chState = APPEND_BYTE;
                 // break;
             } else {
@@ -123,9 +227,9 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 break;
             }
         case DELETE_BYTE:
-            if (this.chCounter > 0) {
-                this.chCounter--;
-                pchTemp = this.pchBuffer + this.chCounter;
+            if (this.chCurrentCounter > 0) {
+                this.chCurrentCounter--;
+                pchTemp = this.pchCurrentBuffer + this.chCurrentCounter;
                 *pchTemp = '\0';
                 this.chState = APPEND_BYTE;
                 goto GOTO_APPEND_BYTE;
@@ -136,11 +240,18 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case CHECK_ENTER:
         GOTO_CHECK_ENTER:
             if (this.chByte == '\x0d') {
-                this.chState = UPDATE_LINE;
+                this.chState = IS_EMPTY;
             } else {
                 this.chState = CHECK_DELETE;
                 goto GOTO_CHECK_DELETE;
             }
+            // break;
+        case IS_EMPTY:
+            if(!this.chCurrentCounter){
+                this.chState = END_BUFFER_ENTER;
+                goto GOTO_END_BUFFER_ENTER;
+            }
+            this.chState = UPDATE_LINE;
             // break;
         case UPDATE_LINE:
             this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
@@ -169,15 +280,16 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case PROCESSING_STRING:
             if (fsm_rt_cpl == this.ptProcessingString->fnProcessingString(
                                 this.ptProcessingString->pTarget, 
-                                this.pchBuffer)) {
+                                this.pchCurrentBuffer)) {
                 this.chState = END_BUFFER_ENTER;
-                this.chCounter =0;
-                *this.pchBuffer = '\0';
+                this.chLastMaxNumber=this.chCurrentCounter;
+                memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chLastMaxNumber);
                 // break;
             } else {
                 break;
             }
         case END_BUFFER_ENTER:
+        GOTO_END_BUFFER_ENTER:
             this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
             if (this.ptPrintStr == NULL) {
                 break;
