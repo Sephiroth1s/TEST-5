@@ -85,7 +85,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
     switch (this.chState) {
         case START:
             this.chCurrentCounter = 0;
-            *this.pchCurrentBuffer = '\0';     //
+            *this.pchCurrentBuffer = '\0';
             this.chState = PRINT_START_FLAG;
             // break;
         case PRINT_START_FLAG:
@@ -129,7 +129,9 @@ fsm_rt_t task_console(console_print_t *ptThis)
                     *pchTemp = '\0';
                     this.chLastCounter++;
                     this.chCurrentCounter = this.chLastCounter;
+                    RESET_EVENT(this.ptRepeatByte);
                     this.chState = KEY_F3;
+                    printf("print last Byte\r\n");
                 }
             } while (0);
             break;
@@ -179,7 +181,9 @@ fsm_rt_t task_console(console_print_t *ptThis)
                        this.chLastMaxNumber - this.chCurrentCounter);
                 this.chLastCounter = this.chLastMaxNumber;
                 this.chCurrentCounter = this.chLastCounter;
+                RESET_EVENT(this.ptRepeatLine);
                 this.chState = READ_BYTE;
+                printf("print last cmd\r\n");
             } 
             break;
         case READ_BYTE:
@@ -208,13 +212,13 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chState = APPEND_BYTE;
                 // break;
             } else {
-                this.chState = READ_BYTE;
+                this.chState = KEY_F1;
                 break;
             }
         case APPEND_BYTE:
         GOTO_APPEND_BYTE:
             if (print_str_output_byte(this.pOutputTarget, this.chByte)) {
-                this.chState = READ_BYTE;
+                this.chState = KEY_F1;
             }
             break;
         case CHECK_DELETE:
@@ -223,7 +227,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chState = DELETE_BYTE;
                 // break;
             } else {
-                this.chState = READ_BYTE;
+                this.chState = KEY_F1;
                 break;
             }
         case DELETE_BYTE:
@@ -234,7 +238,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chState = APPEND_BYTE;
                 goto GOTO_APPEND_BYTE;
             } else {
-                this.chState = READ_BYTE;
+                this.chState = KEY_F1;
                 break;
             }
         case CHECK_ENTER:
