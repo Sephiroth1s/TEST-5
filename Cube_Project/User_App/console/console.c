@@ -37,6 +37,7 @@ bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
     this.chState = START;
     this.chMaxNumber = ptCFG->chMaxNumber;
     this.chLastCounter = 0;
+    this.chLastMaxNumber = 0;
     this.pchCurrentBuffer = ptCFG->pchCurrentBuffer;
     this.pchLastBuffer = ptCFG->pchLastBuffer;
     this.ptRepeatByte = ptCFG->ptRepeatByte;
@@ -54,8 +55,6 @@ fsm_rt_t task_console(console_print_t *ptThis)
         PRINT_START_FLAG,
         KEY_F1,
         KEY_F3,
-        CHECK_CURRENT_BYTE_F1,
-        CHECK_CURRENT_BYTE_F3,
         IS_BEYOND_F1,
         IS_BEYOND_F3,
         REPEAT_BYTE,
@@ -100,17 +99,12 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case KEY_F1:
         EDIT_LOOP_START:
             if (WAIT_EVENT(this.ptRepeatByte)) {
-                this.chState = CHECK_CURRENT_BYTE_F1;
+                this.chLastCounter = this.chCurrentCounter;
+                this.chState = IS_BEYOND_F1;
             } else {
                 this.chState = KEY_F3;
                 goto GOTO_KEY_F3;
             }
-            // break;
-        case CHECK_CURRENT_BYTE_F1:
-            if (this.chLastCounter > this.chCurrentCounter) {
-                this.chLastCounter = this.chCurrentCounter;
-            }
-            this.chState = IS_BEYOND_F1;
             // break;
         case IS_BEYOND_F1:
             if (this.chLastCounter >= this.chLastMaxNumber) {
@@ -137,18 +131,12 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case KEY_F3:
         GOTO_KEY_F3:
             if (WAIT_EVENT(this.ptRepeatLine)) {
-                this.chState = CHECK_CURRENT_BYTE_F3;
+                this.chLastCounter = this.chCurrentCounter;
+                this.chState = IS_BEYOND_F3;
             } else {
                 this.chState = READ_BYTE;
                 goto READ_BYTE_START;
             }
-            // break;
-        case CHECK_CURRENT_BYTE_F3:
-            if (this.chLastCounter > this.chCurrentCounter) {
-                this.chLastCounter = this.chCurrentCounter;
-            }
-            this.chState = IS_BEYOND_F3;
-            // break;
         case IS_BEYOND_F3:
             if (this.chLastCounter >= this.chLastMaxNumber) {
                 this.chState = READ_BYTE;
@@ -178,10 +166,11 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 memcpy(this.pchCurrentBuffer + this.chCurrentCounter,
                        this.pchLastBuffer + this.chCurrentCounter,
                        this.chLastMaxNumber - this.chCurrentCounter);
+                // printf("chLastMaxNumber:%d chCurrentCounter:%d-%s",this.chLastMaxNumber,this.chCurrentCounter,this.pchCurrentBuffer);
                 this.chLastCounter = this.chLastMaxNumber;
                 this.chCurrentCounter = this.chLastCounter;
                 RESET_EVENT(this.ptRepeatLine);
-                this.chState = READ_BYTE;
+                this.chState = KEY_F1;
             } 
             break;
         case READ_BYTE:
@@ -191,6 +180,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chState = CHECK_BYTE;
                 // break;
             } else {
+                this.chState = KEY_F1;
                 break;
             }
         case CHECK_BYTE:
@@ -284,8 +274,9 @@ fsm_rt_t task_console(console_print_t *ptThis)
                                 this.ptProcessingString->pTarget, 
                                 this.pchCurrentBuffer)) {
                 this.chState = END_BUFFER_ENTER;
-                this.chLastMaxNumber=this.chCurrentCounter;
-                memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chLastMaxNumber);
+                this.chLastMaxNumber = this.chCurrentCounter;
+                printf("-chLastMaxNumber:%d chCurrentCounter:%d-%s",this.chMaxNumber,this.chCurrentCounter,this.pchCurrentBuffer);
+                memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chMaxNumber);
                 // break;
             } else {
                 break;

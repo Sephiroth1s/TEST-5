@@ -18,7 +18,7 @@
 
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
-#define CONSOLE_BUFFER_SIZE 50
+#define CONSOLE_BUFFER_SIZE 10
 #define CONSOLE_INPUT_SIZE 50
 
 typedef struct print_buffer_t print_buffer_t;
@@ -117,8 +117,8 @@ int main(void)
     static check_use_peek_t s_tCheckWordsUsePeek;
     system_init();
     task_console_init(&s_tConsole, &c_tConsoleCFG);
-    INIT_EVENT(&s_tRepeatByteEvent,false,true);
-    INIT_EVENT(&s_tRepeatLineEvent,false,true);
+    INIT_EVENT(&s_tRepeatByteEvent,false,false);
+    INIT_EVENT(&s_tRepeatLineEvent,false,false);
     POOL_INIT(print_str, &s_tPrintFreeList);
     POOL_ADD_HEAP(print_str, &s_tPrintFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
