@@ -38,8 +38,7 @@ static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
 
 static bool console_input(uint8_t chByte);
 static fsm_rt_t processing_string(print_buffer_t *ptThis, uint8_t *pchBuffer);
-static void repeat_byte_handler(msg_t *ptMsg);
-static void repeat_line_handler(msg_t *ptMsg);
+static void repeat_msg_handler(msg_t *ptMsg);
 
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
@@ -73,14 +72,15 @@ int main(void)
                                         &c_tProcessingString,
                                         UBOUND(s_chBuffer),
                                         s_chBuffer,
+                                        s_chLastBuffer,
                                         &s_tFIFOout,
                                         &s_tRepeatByteEvent,
                                         &s_tRepeatLineEvent};
     static console_print_t s_tConsole;
     const static msg_t c_tMSGMap[] = {
-                        {"\x1b\x4f\x50", &s_tRepeatByteEvent, &repeat_byte_handler},
+                        {"\x1b\x4f\x50", &s_tRepeatByteEvent, &repeat_msg_handler},
                         {"\x1b\x4f\x51", NULL, NULL},
-                        {"\x1b\x4f\x52", &s_tRepeatLineEvent, &repeat_line_handler},
+                        {"\x1b\x4f\x52", &s_tRepeatLineEvent, &repeat_msg_handler},
                         {"\x1b\x4f\x53", NULL, NULL},
                         {"\x1b\x4f\x54", NULL, NULL},
                         {"\x1b\x4f\x55", NULL, NULL},
@@ -135,24 +135,15 @@ int main(void)
         serial_out_task();
     }
 }
-void repeat_byte_handler(msg_t *ptMsg)
+void repeat_msg_handler(msg_t *ptMsg)
 {
     if (ptMsg != NULL) {
         if (ptMsg->pTarget != NULL) {
-            printf("F1 is Press\r\n");
             SET_EVENT(ptMsg->pTarget);
         }
     }
 }
-void repeat_line_handler(msg_t *ptMsg)
-{
-    if (ptMsg != NULL) {
-        if (ptMsg->pTarget != NULL) {
-            printf("F1 is Press\r\n");
-            SET_EVENT(ptMsg->pTarget);
-        }
-    }
-}
+
 bool console_input(uint8_t chByte)
 {
     if (ENQUEUE_BYTE(&s_tFIFOConsolein, chByte)) {

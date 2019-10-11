@@ -131,7 +131,6 @@ fsm_rt_t task_console(console_print_t *ptThis)
                     this.chCurrentCounter = this.chLastCounter;
                     RESET_EVENT(this.ptRepeatByte);
                     this.chState = KEY_F3;
-                    printf("print last Byte\r\n");
                 }
             } while (0);
             break;
@@ -183,7 +182,6 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chCurrentCounter = this.chLastCounter;
                 RESET_EVENT(this.ptRepeatLine);
                 this.chState = READ_BYTE;
-                printf("print last cmd\r\n");
             } 
             break;
         case READ_BYTE:
