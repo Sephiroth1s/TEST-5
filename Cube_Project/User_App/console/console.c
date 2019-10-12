@@ -35,7 +35,7 @@ bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
         return false;
     }
     this.chState = START;
-    this.chMaxNumber = ptCFG->chMaxNumber;
+    this.chMaxNumber = ptCFG->chMaxNumber-1;
     this.chLastCounter = 0;
     this.chLastMaxNumber = 0;
     this.pchCurrentBuffer = ptCFG->pchCurrentBuffer;
@@ -107,7 +107,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
             }
             // break;
         case IS_BEYOND_F1:
-            if (this.chLastCounter >= this.chLastMaxNumber - 1) {
+            if (this.chLastCounter >= this.chLastMaxNumber) {
                 this.chState = READ_BYTE;
                 goto READ_BYTE_START;
             }
@@ -138,7 +138,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 goto READ_BYTE_START;
             }
         case IS_BEYOND_F3:
-            if (this.chLastCounter >= this.chLastMaxNumber - 1) {
+            if (this.chLastCounter >= this.chLastMaxNumber) {
                 this.chState = READ_BYTE;
                 goto READ_BYTE_START;
             }
@@ -166,7 +166,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 memcpy(this.pchCurrentBuffer + this.chLastCounter,
                        this.pchLastBuffer + this.chLastCounter,
                        this.chLastMaxNumber - this.chLastCounter);
-                this.chLastCounter = this.chLastMaxNumber - 1;
+                this.chLastCounter = this.chLastMaxNumber;
                 this.chCurrentCounter = this.chLastCounter;
                 RESET_EVENT(this.ptRepeatLine);
                 this.chState = KEY_F1;
@@ -192,7 +192,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
             }
         case WRITE_BUFFER:
             pchTemp = this.pchCurrentBuffer + this.chCurrentCounter;
-            if (this.chCurrentCounter < this.chMaxNumber - 1) {
+            if (this.chCurrentCounter < this.chMaxNumber) {
                 *pchTemp++ = this.chByte;
                 *pchTemp = '\0';
                 this.chCurrentCounter++;
@@ -273,7 +273,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
                                 this.ptProcessingString->pTarget, 
                                 this.pchCurrentBuffer)) {
                 this.chState = END_BUFFER_ENTER;
-                this.chLastMaxNumber = this.chCurrentCounter + 1;
+                this.chLastMaxNumber = this.chCurrentCounter;
                 memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chLastMaxNumber);
                 // break;
             } else {
