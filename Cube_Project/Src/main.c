@@ -18,7 +18,7 @@
 
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
-#define CONSOLE_BUFFER_SIZE 50
+#define CONSOLE_BUFFER_SIZE 5
 #define CONSOLE_INPUT_SIZE 50
 
 typedef struct print_buffer_t print_buffer_t;
@@ -32,13 +32,14 @@ extern POOL(print_str) s_tPrintFreeList;
 
 static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE], s_chByteConsole[CONSOLE_INPUT_SIZE];
 static byte_queue_t s_tFIFOin, s_tFIFOout, s_tFIFOConsolein;
+static event_t s_tRepeatLineEvent,s_tRepeatByteEvent;
 
 static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
 
 static bool console_input(uint8_t chByte);
 static fsm_rt_t processing_string(print_buffer_t *ptThis, uint8_t *pchBuffer);
-static void msg_handler(msg_t *ptMsg);
-    
+static void repeat_msg_handler(msg_t *ptMsg);
+
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
 
@@ -63,15 +64,23 @@ int main(void)
     };
     static print_buffer_t s_tPrintBufferTarget = {START, &s_tFIFOout};
     static uint8_t s_chBuffer[CONSOLE_BUFFER_SIZE + 1] = {'\0'};
+    static uint8_t s_chLastBuffer[UBOUND(s_chBuffer)] = {'\0'};
     const static read_byte_evt_handler_t c_tReadByteEvent = {&dequeue_byte, &s_tFIFOConsolein};
     const static processing_string_evt_handler_t c_tProcessingString = {&processing_string, &s_tPrintBufferTarget};
-    const static console_print_cfg_t c_tConsoleCFG = {&c_tReadByteEvent, &c_tProcessingString, UBOUND(s_chBuffer), s_chBuffer, &s_tFIFOout};
+    const static console_print_cfg_t c_tConsoleCFG = {
+                                        &c_tReadByteEvent,
+                                        &c_tProcessingString,
+                                        UBOUND(s_chBuffer),
+                                        s_chBuffer,
+                                        s_chLastBuffer,
+                                        &s_tFIFOout,
+                                        &s_tRepeatByteEvent,
+                                        &s_tRepeatLineEvent};
     static console_print_t s_tConsole;
     const static msg_t c_tMSGMap[] = {
-                        {"\x1b\x4f\x50", NULL, NULL},
-                        {"\x1b\x4f\x50", NULL, NULL},
+                        {"\x1b\x4f\x50", &s_tRepeatByteEvent, &repeat_msg_handler},
                         {"\x1b\x4f\x51", NULL, NULL},
-                        {"\x1b\x4f\x52", NULL, NULL},
+                        {"\x1b\x4f\x52", &s_tRepeatLineEvent, &repeat_msg_handler},
                         {"\x1b\x4f\x53", NULL, NULL},
                         {"\x1b\x4f\x54", NULL, NULL},
                         {"\x1b\x4f\x55", NULL, NULL},
@@ -107,7 +116,10 @@ int main(void)
                                         &console_input};
     static check_use_peek_t s_tCheckWordsUsePeek;
     system_init();
+    led_init();
     task_console_init(&s_tConsole, &c_tConsoleCFG);
+    INIT_EVENT(&s_tRepeatByteEvent,false,false);
+    INIT_EVENT(&s_tRepeatLineEvent,false,false);
     POOL_INIT(print_str, &s_tPrintFreeList);
     POOL_ADD_HEAP(print_str, &s_tPrintFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
@@ -122,6 +134,14 @@ int main(void)
         CHECK_USE_PEEK.CheckUsePeek(&s_tCheckWordsUsePeek);
         serial_in_task();
         serial_out_task();
+    }
+}
+void repeat_msg_handler(msg_t *ptMsg)
+{
+    if (ptMsg != NULL) {
+        if (ptMsg->pTarget != NULL) {
+            SET_EVENT(ptMsg->pTarget);
+        }
     }
 }
 
