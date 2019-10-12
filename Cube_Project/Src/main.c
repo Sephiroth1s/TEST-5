@@ -116,6 +116,7 @@ int main(void)
                                         &console_input};
     static check_use_peek_t s_tCheckWordsUsePeek;
     system_init();
+    led_init();
     task_console_init(&s_tConsole, &c_tConsoleCFG);
     INIT_EVENT(&s_tRepeatByteEvent,false,false);
     INIT_EVENT(&s_tRepeatLineEvent,false,false);

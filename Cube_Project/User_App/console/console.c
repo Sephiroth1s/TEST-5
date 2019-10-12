@@ -163,8 +163,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case PRINT_LAST_CMD:
             if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
                 POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-                memcpy(this.pchCurrentBuffer + this.chCurrentCounter,
-                       this.pchLastBuffer + this.chCurrentCounter,
+                memcpy(this.pchCurrentBuffer + this.chLastCounter),
+                       this.pchLastBuffer + this.chLastCounter,
                        this.chLastMaxNumber - this.chCurrentCounter);
                 // printf("chLastMaxNumber:%d chCurrentCounter:%d-%s",this.chLastMaxNumber,this.chCurrentCounter,this.pchCurrentBuffer);
                 this.chLastCounter = this.chLastMaxNumber;
@@ -275,7 +275,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
                                 this.pchCurrentBuffer)) {
                 this.chState = END_BUFFER_ENTER;
                 this.chLastMaxNumber = this.chCurrentCounter;
-                printf("-chLastMaxNumber:%d chCurrentCounter:%d-%s",this.chMaxNumber,this.chCurrentCounter,this.pchCurrentBuffer);
+                // printf("-chLastMaxNumber:%d chCurrentCounter:%d-%s",this.chMaxNumber,this.chCurrentCounter,this.pchCurrentBuffer);
                 memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chMaxNumber);
                 // break;
             } else {
