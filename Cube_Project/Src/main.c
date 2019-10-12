@@ -18,7 +18,7 @@
 
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
-#define CONSOLE_BUFFER_SIZE 10
+#define CONSOLE_BUFFER_SIZE 5
 #define CONSOLE_INPUT_SIZE 50
 
 typedef struct print_buffer_t print_buffer_t;
