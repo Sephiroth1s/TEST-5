@@ -165,7 +165,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
                 memcpy(this.pchCurrentBuffer + this.chLastCounter,
                        this.pchLastBuffer + this.chLastCounter,
-                       this.chLastMaxNumber - this.chLastCounter+1);
+                       this.chLastMaxNumber - this.chLastCounter + 1);
                 this.chLastCounter = this.chLastMaxNumber;
                 this.chCurrentCounter = this.chLastCounter;
                 RESET_EVENT(this.ptRepeatLine);
@@ -274,7 +274,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
                                 this.pchCurrentBuffer)) {
                 this.chState = END_BUFFER_ENTER;
                 this.chLastMaxNumber = this.chCurrentCounter;
-                memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chLastMaxNumber+1);
+                memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chLastMaxNumber + 1);
                 // break;
             } else {
                 break;
