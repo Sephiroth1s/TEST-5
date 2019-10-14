@@ -12,15 +12,21 @@ struct processing_string_evt_handler_t {
     void *pTarget;
 };
 
-typedef fsm_rt_t special_key_t();
+#if SPECIAL_KEY
 typedef struct special_key_evt_handler_t special_key_evt_handler_t;
+typedef fsm_rt_t special_key_function_t(special_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber);
 struct special_key_evt_handler_t {
     uint8_t chState;
     event_t *ptRepeatByte;
     event_t *ptRepeatLine;
     uint8_t chLastCounter;
-    uint8_t chLastMaxNumber;
+    print_str_t *ptPrintStr;
+    uint8_t *pchLastBuffer;
+    uint8_t *pchCurrentBuffer;
+    void *pOutputTarget;
+    special_key_function_t *fnSpecialKey;
 };
+#endif
 
 typedef struct {
     uint8_t chState;
@@ -32,8 +38,11 @@ typedef struct {
     uint8_t chByte;
     uint8_t chCurrentCounter;
     uint8_t chMaxNumber;
+#if SPECIAL_KEY
     uint8_t *pchLastBuffer;
+    uint8_t chLastMaxNumber;
     special_key_evt_handler_t *ptSpecialKey;
+#endif
 } console_print_t;
 
 typedef struct {
@@ -41,13 +50,17 @@ typedef struct {
     processing_string_evt_handler_t *ptProcessingString;
     uint8_t chMaxNumber;
     uint8_t *pchCurrentBuffer;
-    uint8_t *pchLastBuffer;
     void *pOutputTarget;
+#if SPECIAL_KEY
+    uint8_t *pchLastBuffer;
     special_key_evt_handler_t *ptSpecialKey;
+#endif
 } console_print_cfg_t;
 
 extern bool task_console_init(console_print_t *ptThis, console_print_cfg_t *ptCFG);
 extern fsm_rt_t task_console(console_print_t *ptThis);
-static fsm_rt_t special_key_evt_handler(special_key_evt_handler_t *ptTarget,uint8_t *pchBuffer);
+#if SPECIAL_KEY
+static fsm_rt_t special_key(special_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber);
+#endif
 
 #endif

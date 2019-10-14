@@ -3,4 +3,9 @@
 
 #include "vsf.h"
 
+#define ENABLE 1
+#define DISABLE 0
+
+#define SPECIAL_KEY ENABLE
+
 #endif

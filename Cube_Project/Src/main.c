@@ -62,6 +62,7 @@ int main(void)
     enum { 
         START 
     };
+    static special_key_evt_handler_t s_tSpecialKey={START,&s_tRepeatByteEvent,&s_tRepeatLineEvent};
     static print_buffer_t s_tPrintBufferTarget = {START, &s_tFIFOout};
     static uint8_t s_chBuffer[CONSOLE_BUFFER_SIZE + 1] = {'\0'};
     static uint8_t s_chLastBuffer[UBOUND(s_chBuffer)] = {'\0'};
@@ -72,10 +73,10 @@ int main(void)
                                         &c_tProcessingString,
                                         UBOUND(s_chBuffer),
                                         s_chBuffer,
-                                        s_chLastBuffer,
                                         &s_tFIFOout,
-                                        &s_tRepeatByteEvent,
-                                        &s_tRepeatLineEvent};
+                                        s_chLastBuffer,
+                                        &s_tSpecialKey
+                                        };
     static console_print_t s_tConsole;
     const static msg_t c_tMSGMap[] = {
                         {"\x1b\x4f\x50", &s_tRepeatByteEvent, &repeat_msg_handler},
