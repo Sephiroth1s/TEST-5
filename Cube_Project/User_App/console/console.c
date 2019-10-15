@@ -3,7 +3,9 @@
 #include "../print_string/print_string.h"
 #include "../check_string/check_string.h"
 #include "../event/event.h"
+#include <string.h>
 
+#define CONSOLE_SEPERATORS ";,-/"
 #define CURSOR_RIGHT "\033[C"        // 光标右移 1 行
 #define ENTER "\x0A\x0D"             // 换行并输出标识符
 #define ERASE_LINE "\033[2K"         //  清楚当前行
@@ -379,3 +381,48 @@ fsm_rt_t special_key(special_key_evt_handler_t *ptThis, uint8_t *chCurrentCounte
     return fsm_rt_on_going;
 }
 #endif
+
+uint8_t* string_token(uint8_t *pchBuffer,uint8_t *pchSeperators)
+{
+    if ((pchBuffer == NULL) || (pchSeperators == NULL)) {
+        return NULL;
+    }
+    char *pchTempSeperators;
+    bool bFlag;
+    while (*pchBuffer != '\0') {
+        pchTempSeperators = pchSeperators;
+        bFlag = false;
+        while (*pchTempSeperators != '\0') {
+            if (*pchTempSeperators++ == *pchBuffer) {
+                bFlag = true;
+                break;
+            }
+        }
+        if (!bFlag)
+            break;
+        ++pchBuffer;
+    }
+    char *pchTempBuffer = pchBuffer;
+    char *pchTempLastBuffer = pchBuffer;
+    while (*pchTempBuffer != '\0') {
+        pchTempSeperators = pchSeperators;
+        bFlag = false;
+        while (*pchTempSeperators != '\0'){
+            if (*pchTempSeperators++ == *pchTempBuffer) {
+                bFlag = true;
+                *pchTempBuffer = '\0';
+                break;
+            }
+        }
+        ++pchTempBuffer;
+        if (bFlag) {
+            memmove(pchTempLastBuffer, pchTempBuffer, strlen(pchTempBuffer));
+            pchTempBuffer = pchTempLastBuffer;
+        } else {
+            pchTempLastBuffer = pchTempBuffer;
+        }
+    }
+    pchTempLastBuffer=pchBuffer;
+    if(pchTempBuffer)
+    return pchBuffer;
+}
