@@ -3,9 +3,6 @@
 
 #include "vsf.h"
 
-#define ENABLE 1
-#define DISABLE 0
-
-#define SPECIAL_KEY ENABLE
+#define VSF_USE_FUNCTION_KEY ENABLED
 
 #endif

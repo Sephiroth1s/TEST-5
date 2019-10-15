@@ -12,7 +12,7 @@ struct processing_string_evt_handler_t {
     void *pTarget;
 };
 
-#if SPECIAL_KEY
+#if VSF_USE_FUNCTION_KEY
 typedef struct special_key_evt_handler_t special_key_evt_handler_t;
 typedef fsm_rt_t special_key_function_t(special_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber);
 struct special_key_evt_handler_t {
@@ -38,7 +38,7 @@ typedef struct {
     uint8_t chByte;
     uint8_t chCurrentCounter;
     uint8_t chMaxNumber;
-#if SPECIAL_KEY
+#if VSF_USE_FUNCTION_KEY
     uint8_t *pchLastBuffer;
     uint8_t chLastMaxNumber;
     special_key_evt_handler_t *ptSpecialKey;
@@ -51,7 +51,7 @@ typedef struct {
     uint8_t chMaxNumber;
     uint8_t *pchCurrentBuffer;
     void *pOutputTarget;
-#if SPECIAL_KEY
+#if VSF_USE_FUNCTION_KEY
     uint8_t *pchLastBuffer;
     special_key_evt_handler_t *ptSpecialKey;
 #endif
@@ -59,7 +59,7 @@ typedef struct {
 
 extern bool task_console_init(console_print_t *ptThis, console_print_cfg_t *ptCFG);
 extern fsm_rt_t task_console(console_print_t *ptThis);
-#if SPECIAL_KEY
+#if VSF_USE_FUNCTION_KEY
 static fsm_rt_t special_key(special_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber);
 #endif
 

@@ -32,7 +32,7 @@ bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
         return false;
     }
 
-#if SPECIAL_KEY
+#if VSF_USE_FUNCTION_KEY
     if(        (NULL == ptCFG->ptSpecialKey)
             || (NULL == ptCFG->ptSpecialKey->ptRepeatByte)
             || (NULL == ptCFG->ptSpecialKey->ptRepeatLine)){
@@ -62,8 +62,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
     enum {
         START,
         PRINT_START_FLAG,
-        #if SPECIAL_KEY
-        SPECIAL_KEY_F1_F3,
+        #if VSF_USE_FUNCTION_KEY
+        VSF_USE_FUNCTION_KEY_F1_F3,
         #endif
         READ_BYTE,
         CHECK_BYTE,
@@ -96,8 +96,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
             if (print_str_output_byte(this.pOutputTarget, '>')) {
                 this.chCurrentCounter = 0;
                 *this.pchCurrentBuffer = '\0';
-                #if SPECIAL_KEY
-                this.chState = SPECIAL_KEY_F1_F3;
+                #if VSF_USE_FUNCTION_KEY
+                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
                 #else
                 this.chState = READ_BYTE;
                 goto READ_BYTE_START;
@@ -106,8 +106,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
             } else {
                 break;
             }
-        #if SPECIAL_KEY
-        case SPECIAL_KEY_F1_F3:
+        #if VSF_USE_FUNCTION_KEY
+        case VSF_USE_FUNCTION_KEY_F1_F3:
             if (fsm_rt_cpl == this.ptSpecialKey->fnSpecialKey(
                                   this.ptSpecialKey, 
                                   &this.chCurrentCounter,
@@ -125,8 +125,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chState = CHECK_BYTE;
                 // break;
             } else {
-                #if SPECIAL_KEY
-                this.chState = SPECIAL_KEY_F1_F3;
+                #if VSF_USE_FUNCTION_KEY
+                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
                 #else
                 this.chState = READ_BYTE;
                 #endif
@@ -149,8 +149,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chState = APPEND_BYTE;
                 // break;
             } else {
-                #if SPECIAL_KEY
-                this.chState = SPECIAL_KEY_F1_F3;
+                #if VSF_USE_FUNCTION_KEY
+                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
                 #else
                 this.chState = READ_BYTE;
                 #endif
@@ -159,8 +159,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case APPEND_BYTE:
         GOTO_APPEND_BYTE:
             if (print_str_output_byte(this.pOutputTarget, this.chByte)) {
-                #if SPECIAL_KEY
-                this.chState = SPECIAL_KEY_F1_F3;
+                #if VSF_USE_FUNCTION_KEY
+                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
                 #else
                 this.chState = READ_BYTE;
                 #endif
@@ -172,8 +172,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chState = DELETE_BYTE;
                 // break;
             } else {
-                #if SPECIAL_KEY
-                this.chState = SPECIAL_KEY_F1_F3;
+                #if VSF_USE_FUNCTION_KEY
+                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
                 #else
                 this.chState = READ_BYTE;
                 #endif
@@ -187,8 +187,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chState = APPEND_BYTE;
                 goto GOTO_APPEND_BYTE;
             } else {
-                #if SPECIAL_KEY
-                this.chState = SPECIAL_KEY_F1_F3;
+                #if VSF_USE_FUNCTION_KEY
+                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
                 #else
                 this.chState = READ_BYTE;
                 #endif
@@ -239,8 +239,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
                                 this.ptProcessingString->pTarget, 
                                 this.pchCurrentBuffer)) {
                 this.chState = END_BUFFER_ENTER;
+                #if VSF_USE_FUNCTION_KEY
                 this.chLastMaxNumber = this.chCurrentCounter;
-                #if SPECIAL_KEY
                 memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chLastMaxNumber + 1);
                 #endif
                 // break;
@@ -278,7 +278,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
     return fsm_rt_on_going;
 }
 
-#if SPECIAL_KEY
+#if VSF_USE_FUNCTION_KEY
 fsm_rt_t special_key(special_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber)
 {
     enum{
