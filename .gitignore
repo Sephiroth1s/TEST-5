@@ -68,8 +68,6 @@ dkms.conf
 *.scvd
 *.iex
 *.uvguix.*
-*.uvoptx
-*.uvprojx
 Cube_Project/MDK-ARM/DebugConfig/*
 build/mdk/fsm/
 build/mdk/DebugConfig/
