@@ -199,18 +199,11 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case CHECK_ENTER:
         GOTO_CHECK_ENTER:
             if (this.chByte == '\x0d') {
-                this.chState = IS_EMPTY;
+                this.chState = UPDATE_LINE;
             } else {
                 this.chState = CHECK_DELETE;
                 goto GOTO_CHECK_DELETE;
             }
-            // break;
-        case IS_EMPTY:
-            if(!this.chCurrentCounter){
-                this.chState = END_BUFFER_ENTER;
-                goto GOTO_END_BUFFER_ENTER;
-            }
-            this.chState = UPDATE_LINE;
             // break;
         case UPDATE_LINE:
             this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
@@ -245,30 +238,6 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 this.chLastMaxNumber = this.chCurrentCounter;
                 memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chLastMaxNumber + 1);
                 #endif
-                // break;
-            } else {
-                break;
-            }
-        case END_BUFFER_ENTER:
-        GOTO_END_BUFFER_ENTER:
-            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
-            if (this.ptPrintStr == NULL) {
-                break;
-            } else {
-                do {
-                    const print_str_cfg_t c_tCFG = {
-                        ENTER, 
-                        this.pOutputTarget,
-                        &enqueue_byte
-                    };
-                    PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
-                } while (0);
-                this.chState = PRINT_END_ENTER;
-                // break;
-            }
-        case PRINT_END_ENTER:
-            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
-                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
                 TASK_CONSOLE_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -411,8 +380,7 @@ uint8_t* find_token(uint8_t *pchBuffer,uint8_t *pchSeperators, uint16_t *hwToken
     while (*pchReadBuffer != '\0') {
         pchTempSeperators = pchSeperators;
         bFlag = false;
-        for (uint8_t chSeperatorsCounter = 0; chSeperatorsCounter <= strlen(pchSeperators); chSeperatorsCounter++)
-        {
+        for (uint8_t chSeperatorsCounter = 0; chSeperatorsCounter <= strlen(pchSeperators); chSeperatorsCounter++) {
             if (*pchTempSeperators++ == *pchReadBuffer) {
                 bFlag = true;
                 break;
