@@ -5,7 +5,7 @@
 #include "../check_string/check_string.h"
 #include "../event/event.h"
 
-typedef fsm_rt_t console_token_handler_t(uint8_t *pchTokens, uint16_t hwTokens);
+typedef fsm_rt_t console_token_handler_t(void *pThis, uint8_t *pchTokens, uint16_t hwTokens);
 typedef struct processing_string_evt_handler_t processing_string_evt_handler_t;
 struct processing_string_evt_handler_t {
     console_token_handler_t *fnProcessingString;

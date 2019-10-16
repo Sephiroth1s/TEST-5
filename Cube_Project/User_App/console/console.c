@@ -382,12 +382,12 @@ fsm_rt_t special_key(special_key_evt_handler_t *ptThis, uint8_t *chCurrentCounte
 }
 #endif
 
-uint8_t* string_token(uint8_t *pchBuffer,uint8_t *pchSeperators)
+uint8_t* find_token(uint8_t *pchBuffer,uint8_t *pchSeperators, uint16_t *hwTokens)
 {
     if ((pchBuffer == NULL) || (pchSeperators == NULL)) {
         return NULL;
     }
-    char *pchTempSeperators;
+    uint8_t *pchTempSeperators;
     bool bFlag;
     while (*pchBuffer != '\0') {
         pchTempSeperators = pchSeperators;
@@ -403,25 +403,33 @@ uint8_t* string_token(uint8_t *pchBuffer,uint8_t *pchSeperators)
         }
         ++pchBuffer;
     }
-    char *pchTempBuffer = pchBuffer;
-    char *pchTempLastBuffer = pchBuffer;
-    while (*pchTempBuffer != '\0') {
+    
+    uint8_t *pchReadBuffer = pchBuffer;
+    uint8_t *pchWriteBuffer = pchBuffer;
+    uint8_t chCounter = 0;
+
+    while (*pchReadBuffer != '\0') {
         pchTempSeperators = pchSeperators;
         bFlag = false;
-        while (*pchTempSeperators != '\0'){
-            if (*pchTempSeperators++ == *pchTempBuffer) {
+        for (uint8_t chSeperatorsCounter = 0; chSeperatorsCounter <= strlen(pchSeperators); chSeperatorsCounter++)
+        {
+            if (*pchTempSeperators++ == *pchReadBuffer) {
                 bFlag = true;
-                *pchTempBuffer = '\0';
                 break;
             }
         }
-        ++pchTempBuffer;
         if (bFlag) {
-            memmove(pchTempLastBuffer, pchTempBuffer, strlen(pchTempBuffer));
-            pchTempBuffer = pchTempLastBuffer;
+            chCounter++;
+            if (chCounter == 1) {
+                *pchWriteBuffer++ = '\0';
+                *hwTokens = *hwTokens + 1;
+            }
         } else {
-            pchTempLastBuffer = pchTempBuffer;
+            chCounter = 0;
+            *pchWriteBuffer = *pchReadBuffer;
+            pchWriteBuffer++;
         }
+        pchReadBuffer++;
     }
     return pchBuffer;
 }
