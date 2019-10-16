@@ -398,8 +398,9 @@ uint8_t* string_token(uint8_t *pchBuffer,uint8_t *pchSeperators)
                 break;
             }
         }
-        if (!bFlag)
+        if (!bFlag) {
             break;
+        }
         ++pchBuffer;
     }
     char *pchTempBuffer = pchBuffer;
@@ -422,7 +423,5 @@ uint8_t* string_token(uint8_t *pchBuffer,uint8_t *pchSeperators)
             pchTempLastBuffer = pchTempBuffer;
         }
     }
-    pchTempLastBuffer=pchBuffer;
-    if(pchTempBuffer)
     return pchBuffer;
 }

@@ -5,10 +5,10 @@
 #include "../check_string/check_string.h"
 #include "../event/event.h"
 
-typedef fsm_rt_t processing_string_t(void *, uint8_t *);
+typedef fsm_rt_t console_token_handler_t(uint8_t *pchTokens, uint16_t hwTokens);
 typedef struct processing_string_evt_handler_t processing_string_evt_handler_t;
 struct processing_string_evt_handler_t {
-    processing_string_t *fnProcessingString;
+    console_token_handler_t *fnProcessingString;
     void *pTarget;
 };
 
@@ -62,5 +62,6 @@ extern fsm_rt_t task_console(console_print_t *ptThis);
 #if VSF_USE_FUNCTION_KEY
 static fsm_rt_t special_key(special_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber);
 #endif
+static uint8_t* string_token(uint8_t *pchBuffer,uint8_t *pchSeperators);
 
 #endif
