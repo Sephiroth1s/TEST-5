@@ -16,15 +16,18 @@
         this.chState = START;  \
     } while (0);
 
+#define ENTER "\x0A\x0D"
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
-#define CONSOLE_BUFFER_SIZE 10
+#define CONSOLE_BUFFER_SIZE 50
 #define CONSOLE_INPUT_SIZE 50
 
-typedef struct print_buffer_t print_buffer_t;
-struct print_buffer_t{
+typedef struct print_token_t print_token_t;
+struct print_token_t{
     uint8_t chState;
     void *pTarget;
+    uint8_t *pchTokensArray;
+    uint16_t hwTokens;
     print_str_t *ptPrintStr;
 };
 
@@ -37,12 +40,12 @@ static event_t s_tRepeatLineEvent,s_tRepeatByteEvent;
 static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
 
 static bool console_input(uint8_t chByte);
-static fsm_rt_t processing_string(print_buffer_t *ptThis, uint8_t *pchBuffer);
+static fsm_rt_t processing_string(print_token_t *ptThis, uint8_t *pchTokens, uint16_t hwTokens);
 static void repeat_msg_handler(msg_t *ptMsg);
 
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
-
+bool print_str_output_byte(void *ptThis, uint8_t pchByte);
 static void system_init(void)
 {
     /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
@@ -63,7 +66,7 @@ int main(void)
         START 
     };
     static special_key_evt_handler_t s_tSpecialKey={START,&s_tRepeatByteEvent,&s_tRepeatLineEvent};
-    static print_buffer_t s_tPrintBufferTarget = {START, &s_tFIFOout};
+    static print_token_t s_tPrintBufferTarget = {START, &s_tFIFOout};
     static uint8_t s_chBuffer[CONSOLE_BUFFER_SIZE + 1] = {'\0'};
     static uint8_t s_chLastBuffer[UBOUND(s_chBuffer)] = {'\0'};
     const static read_byte_evt_handler_t c_tReadByteEvent = {&dequeue_byte, &s_tFIFOConsolein};
@@ -154,44 +157,76 @@ bool console_input(uint8_t chByte)
     return false;
 }
 
-fsm_rt_t processing_string(print_buffer_t *ptThis, uint8_t *pchBuffer)
+fsm_rt_t processing_string(print_token_t *ptThis, uint8_t *pchTokens, uint16_t hwTokens)
 {
-   enum { 
+    enum {
         START,
-        INIT_PRINT,
-        PRINT_BUFFER
+        CHECK_TOKEN_NUMBER,
+        CHECK_STRING_END,
+        OUTPUT_BYTE,
+        END_STRING_ENTER,
+        PRINT_TOKEN_ENTER
     };
-    switch (this.chState)
-    {
-    case START:
-        this.chState = INIT_PRINT;
-        //break;
-    case INIT_PRINT:
-        this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
-        if (this.ptPrintStr == NULL) {
-            break;
-        } else {
-            do {
-                const print_str_cfg_t c_tCFG = {
-                    pchBuffer, 
-                    this.pTarget,
-                    &enqueue_byte
-                };
-                PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
-            } while (0);
-            this.chState = PRINT_BUFFER;
-            // break;
-        }
-    case PRINT_BUFFER:
-        if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
-            POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-            TASK_CONSOLE_RESET_FSM();
-            return fsm_rt_cpl;
-        }
-        break;
-    default:
+    if ((NULL == ptThis) || (NULL == pchTokens)) {
         return fsm_rt_err;
-        break;
+    }
+    switch (this.chState) {
+        case START:
+            this.pchTokensArray = pchTokens;
+            this.hwTokens = hwTokens;
+            this.chState = CHECK_TOKEN_NUMBER;
+            // break;
+        case CHECK_TOKEN_NUMBER:
+            if (this.hwTokens > 0) {
+                this.chState = CHECK_STRING_END;
+            } else {
+                TASK_CONSOLE_RESET_FSM();
+                return fsm_rt_cpl;
+            }
+            // break;
+        case CHECK_STRING_END:
+        GOTO_CHECK_STRING_END:
+            if (*this.pchTokensArray == '\0') {
+                this.hwTokens--;
+                this.pchTokensArray++;
+                this.chState = END_STRING_ENTER;
+                goto GOTO_END_STRING_ENTER;
+            } else {
+                this.chState = OUTPUT_BYTE;
+            }
+            // break;
+        case OUTPUT_BYTE:
+            if (print_str_output_byte(this.pTarget, *this.pchTokensArray++)) {
+                this.chState = CHECK_STRING_END;
+                goto GOTO_CHECK_STRING_END;
+            }
+            // break;
+        case END_STRING_ENTER:
+        GOTO_END_STRING_ENTER:
+            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
+            if (this.ptPrintStr == NULL) {
+                break;
+            } else {
+                do {
+                    const print_str_cfg_t c_tCFG = {
+                        ENTER, 
+                        this.pTarget,
+                        &enqueue_byte
+                    };
+                    PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
+                } while (0);
+                this.chState = PRINT_TOKEN_ENTER;
+                // break;
+            }
+        case PRINT_TOKEN_ENTER:
+            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
+                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
+                this.chState = CHECK_TOKEN_NUMBER;
+            }
+            break;
+        default:
+            return fsm_rt_err;
+            break;
     }
     return fsm_rt_on_going;
 }

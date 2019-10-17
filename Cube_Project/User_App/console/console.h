@@ -38,6 +38,7 @@ typedef struct {
     uint8_t chByte;
     uint8_t chCurrentCounter;
     uint8_t chMaxNumber;
+    uint16_t hwTokens;
 #if VSF_USE_FUNCTION_KEY
     uint8_t *pchLastBuffer;
     uint8_t chLastMaxNumber;
@@ -62,6 +63,6 @@ extern fsm_rt_t task_console(console_print_t *ptThis);
 #if VSF_USE_FUNCTION_KEY
 static fsm_rt_t special_key(special_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber);
 #endif
-static uint8_t* string_token(uint8_t *pchBuffer,uint8_t *pchSeperators);
+static uint8_t* find_token(uint8_t *pchBuffer,uint8_t *pchSeperators, uint16_t *hwTokens);
 
 #endif

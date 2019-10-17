@@ -5,9 +5,9 @@
 #include "../event/event.h"
 #include <string.h>
 
-#define CONSOLE_SEPERATORS ";,-/"
+#define CONSOLE_SEPERATORS " ;,-/"
 #define CURSOR_RIGHT "\033[C"        // 光标右移 1 行
-#define ENTER "\x0A\x0D"             // 换行并输出标识符
+#define ENTER "\x0A\x0D"             // 换行
 #define ERASE_LINE "\033[2K"         //  清楚当前行
 
 #define this (*ptThis)
@@ -73,13 +73,11 @@ fsm_rt_t task_console(console_print_t *ptThis)
         CHECK_DELETE,
         WRITE_BUFFER,
         APPEND_BYTE,
-        IS_EMPTY,
         UPDATE_LINE,
         DELETE_BYTE,
         PRINT_ENTER,
-        PROCESSING_STRING,
-        END_BUFFER_ENTER,
-        PRINT_END_ENTER
+        FIND_TOKEN,
+        PROCESSING_STRING
     };
     uint8_t *pchTemp;
     if (NULL == ptThis) {
@@ -91,6 +89,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
     switch (this.chState) {
         case START:
             this.chCurrentCounter = 0;
+            this.hwTokens = 0;
             *this.pchCurrentBuffer = '\0';
             this.chState = PRINT_START_FLAG;
             // break;
@@ -224,16 +223,26 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case PRINT_ENTER:
             if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
                 POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-                this.chState = PROCESSING_STRING;
+                this.chState = FIND_TOKEN;
                 // break;
             } else{
                 break;
             }
+        case FIND_TOKEN:
+        GOTO_FIND_TOKEN:
+            if (NULL == find_token(this.pchCurrentBuffer, CONSOLE_SEPERATORS, &this.hwTokens)) {
+                this.chState = FIND_TOKEN;
+                printf("find_token_error\r\n");
+                goto GOTO_FIND_TOKEN;
+            }
+            printf("-%d-\r\n",this.hwTokens);
+            this.chState = PROCESSING_STRING;
+            break;
         case PROCESSING_STRING:
             if (fsm_rt_cpl == this.ptProcessingString->fnProcessingString(
-                                this.ptProcessingString->pTarget, 
-                                this.pchCurrentBuffer)) {
-                this.chState = END_BUFFER_ENTER;
+                                this.ptProcessingString->pTarget,
+                                this.pchCurrentBuffer,
+                                this.hwTokens)) {
                 #if VSF_USE_FUNCTION_KEY
                 this.chLastMaxNumber = this.chCurrentCounter;
                 memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chLastMaxNumber + 1);
@@ -375,13 +384,15 @@ uint8_t* find_token(uint8_t *pchBuffer,uint8_t *pchSeperators, uint16_t *hwToken
     
     uint8_t *pchReadBuffer = pchBuffer;
     uint8_t *pchWriteBuffer = pchBuffer;
-    uint8_t chCounter = 0;
+    static uint8_t chCounter = 0;
 
-    while (*pchReadBuffer != '\0') {
+    for (uint8_t chBufferCounter = 0; chBufferCounter < strlen(pchBuffer); chBufferCounter++) {
+        // while (*pchReadBuffer != '\0'){
         pchTempSeperators = pchSeperators;
         bFlag = false;
         for (uint8_t chSeperatorsCounter = 0; chSeperatorsCounter <= strlen(pchSeperators); chSeperatorsCounter++) {
             if (*pchTempSeperators++ == *pchReadBuffer) {
+                printf("find Seperators");
                 bFlag = true;
                 break;
             }
