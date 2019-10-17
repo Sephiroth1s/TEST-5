@@ -47,7 +47,7 @@ bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
     this.ptSpecialKey->pOutputTarget = ptCFG->pOutputTarget;
     this.ptSpecialKey->pchLastBuffer = ptCFG->pchLastBuffer;
     this.ptSpecialKey->pchCurrentBuffer = ptCFG->pchCurrentBuffer;
-    this.ptSpecialKey->fnSpecialKey = &special_key;
+    this.ptSpecialKey->fnSpecialKey = &function_key;
 #endif
 
     this.chState = START;
@@ -232,10 +232,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
         GOTO_FIND_TOKEN:
             if (NULL == find_token(this.pchCurrentBuffer, CONSOLE_SEPERATORS, &this.hwTokens)) {
                 this.chState = FIND_TOKEN;
-                printf("find_token_error\r\n");
                 goto GOTO_FIND_TOKEN;
             }
-            printf("-%d-\r\n",this.hwTokens);
             this.chState = PROCESSING_STRING;
             break;
         case PROCESSING_STRING:
@@ -259,7 +257,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
 }
 
 #if VSF_USE_FUNCTION_KEY
-fsm_rt_t special_key(special_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber)
+fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber)
 {
     enum{
         START,
@@ -384,15 +382,13 @@ uint8_t* find_token(uint8_t *pchBuffer,uint8_t *pchSeperators, uint16_t *hwToken
     
     uint8_t *pchReadBuffer = pchBuffer;
     uint8_t *pchWriteBuffer = pchBuffer;
-    static uint8_t chCounter = 0;
-
-    for (uint8_t chBufferCounter = 0; chBufferCounter < strlen(pchBuffer); chBufferCounter++) {
-        // while (*pchReadBuffer != '\0'){
+    uint8_t chCounter = 0;
+    uint8_t chSizeBuffer = strlen(pchBuffer);
+    for (uint8_t chBufferCounter = 0; chBufferCounter <= chSizeBuffer; chBufferCounter++) {
         pchTempSeperators = pchSeperators;
         bFlag = false;
         for (uint8_t chSeperatorsCounter = 0; chSeperatorsCounter <= strlen(pchSeperators); chSeperatorsCounter++) {
             if (*pchTempSeperators++ == *pchReadBuffer) {
-                printf("find Seperators");
                 bFlag = true;
                 break;
             }

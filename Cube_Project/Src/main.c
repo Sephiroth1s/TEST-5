@@ -65,7 +65,7 @@ int main(void)
     enum { 
         START 
     };
-    static special_key_evt_handler_t s_tSpecialKey={START,&s_tRepeatByteEvent,&s_tRepeatLineEvent};
+    static function_key_evt_handler_t s_tSpecialKey={START,&s_tRepeatByteEvent,&s_tRepeatLineEvent};
     static print_token_t s_tPrintBufferTarget = {START, &s_tFIFOout};
     static uint8_t s_chBuffer[CONSOLE_BUFFER_SIZE + 1] = {'\0'};
     static uint8_t s_chLastBuffer[UBOUND(s_chBuffer)] = {'\0'};

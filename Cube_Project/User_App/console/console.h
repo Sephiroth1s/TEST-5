@@ -13,9 +13,9 @@ struct processing_string_evt_handler_t {
 };
 
 #if VSF_USE_FUNCTION_KEY
-typedef struct special_key_evt_handler_t special_key_evt_handler_t;
-typedef fsm_rt_t special_key_function_t(special_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber);
-struct special_key_evt_handler_t {
+typedef struct function_key_evt_handler_t function_key_evt_handler_t;
+typedef fsm_rt_t function_key_function_t(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber);
+struct function_key_evt_handler_t {
     uint8_t chState;
     event_t *ptRepeatByte;
     event_t *ptRepeatLine;
@@ -24,7 +24,7 @@ struct special_key_evt_handler_t {
     uint8_t *pchLastBuffer;
     uint8_t *pchCurrentBuffer;
     void *pOutputTarget;
-    special_key_function_t *fnSpecialKey;
+    function_key_function_t *fnSpecialKey;
 };
 #endif
 
@@ -42,7 +42,7 @@ typedef struct {
 #if VSF_USE_FUNCTION_KEY
     uint8_t *pchLastBuffer;
     uint8_t chLastMaxNumber;
-    special_key_evt_handler_t *ptSpecialKey;
+    function_key_evt_handler_t *ptSpecialKey;
 #endif
 } console_print_t;
 
@@ -54,14 +54,14 @@ typedef struct {
     void *pOutputTarget;
 #if VSF_USE_FUNCTION_KEY
     uint8_t *pchLastBuffer;
-    special_key_evt_handler_t *ptSpecialKey;
+    function_key_evt_handler_t *ptSpecialKey;
 #endif
 } console_print_cfg_t;
 
 extern bool task_console_init(console_print_t *ptThis, console_print_cfg_t *ptCFG);
 extern fsm_rt_t task_console(console_print_t *ptThis);
 #if VSF_USE_FUNCTION_KEY
-static fsm_rt_t special_key(special_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber);
+static fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber);
 #endif
 static uint8_t* find_token(uint8_t *pchBuffer,uint8_t *pchSeperators, uint16_t *hwTokens);
 
