@@ -74,6 +74,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
         WRITE_BUFFER,
         APPEND_BYTE,
         UPDATE_LINE,
+        IS_EMPTY,
         DELETE_BYTE,
         PRINT_ENTER,
         FIND_TOKEN,
@@ -223,11 +224,18 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case PRINT_ENTER:
             if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
                 POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-                this.chState = FIND_TOKEN;
+                this.chState = IS_EMPTY;
                 // break;
             } else{
                 break;
             }
+        case IS_EMPTY:
+            if (!this.chCurrentCounter) {
+                TASK_CONSOLE_RESET_FSM();
+                return fsm_rt_cpl;
+            }
+            this.chState = FIND_TOKEN;
+            // break;
         case FIND_TOKEN:
         GOTO_FIND_TOKEN:
             if (NULL == find_token(this.pchCurrentBuffer, CONSOLE_SEPERATORS, &this.hwTokens)) {
@@ -316,41 +324,32 @@ fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCoun
             }
             // break;
         case IS_BEYOND_F3:
-            if (this.chLastCounter >= *chLastMaxNumber) {
-                TASK_CONSOLE_RESET_FSM();
-                return fsm_rt_cpl;
-            }
+        GOTO_IS_BEYOND_F3:
+            do {
+                uint8_t *pchLastTemp, *pchTemp;
+                if (this.chLastCounter >= *chLastMaxNumber) {
+                    *chCurrentCounter = this.chLastCounter;
+                    TASK_CONSOLE_RESET_FSM();
+                    return fsm_rt_cpl;
+                }
+            } while (0);
             this.chState = REPEAT_LINE;
             // break;
         case REPEAT_LINE:
-            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
-            if (this.ptPrintStr == NULL) {
-                break;
-            } else {
-                do {
-                    const print_str_cfg_t c_tCFG = {
-                        this.pchLastBuffer + this.chLastCounter, 
-                        this.pOutputTarget,
-                        &enqueue_byte
-                    };
-                    PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
-                } while (0);
-                this.chState = PRINT_LAST_CMD;
-                // break;
-            }
-        case PRINT_LAST_CMD:
-            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
-                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-                memcpy(this.pchCurrentBuffer + this.chLastCounter,
-                       this.pchLastBuffer + this.chLastCounter,
-                       *chLastMaxNumber - this.chLastCounter + 1);
-                this.chLastCounter = *chLastMaxNumber;
-                *chCurrentCounter = this.chLastCounter;
-                RESET_EVENT(this.ptRepeatLine);
-                TASK_CONSOLE_RESET_FSM();
-                return fsm_rt_cpl;
-            } 
-            break;  
+            do {
+                uint8_t *pchLastTemp, *pchTemp;
+                pchLastTemp = this.pchLastBuffer + this.chLastCounter;
+                if (print_str_output_byte(this.pOutputTarget, *pchLastTemp)) {
+                    pchTemp = this.pchCurrentBuffer + *chCurrentCounter;
+                    *pchTemp++ = *pchLastTemp;
+                    *pchTemp = '\0';
+                    this.chLastCounter++;
+                    *chCurrentCounter = this.chLastCounter;
+                    this.chState = IS_BEYOND_F3;
+                }
+            } while (0);
+            goto GOTO_IS_BEYOND_F3;
+            // break;
         default:
             return fsm_rt_err;
     }
