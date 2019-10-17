@@ -74,6 +74,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
         WRITE_BUFFER,
         APPEND_BYTE,
         UPDATE_LINE,
+        IS_EMPTY,
         DELETE_BYTE,
         PRINT_ENTER,
         FIND_TOKEN,
@@ -223,12 +224,18 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case PRINT_ENTER:
             if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
                 POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-                this.chState = FIND_TOKEN;
+                this.chState = IS_EMPTY;
                 // break;
             } else{
                 break;
             }
-        case 
+        case IS_EMPTY:
+            if (!this.chCurrentCounter) {
+                TASK_CONSOLE_RESET_FSM();
+                return fsm_rt_cpl;
+            }
+            this.chState = FIND_TOKEN;
+            // break;
         case FIND_TOKEN:
         GOTO_FIND_TOKEN:
             if (NULL == find_token(this.pchCurrentBuffer, CONSOLE_SEPERATORS, &this.hwTokens)) {
