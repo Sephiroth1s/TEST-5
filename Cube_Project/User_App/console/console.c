@@ -199,6 +199,10 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case CHECK_ENTER:
         GOTO_CHECK_ENTER:
             if (this.chByte == '\x0d') {
+                #if VSF_USE_FUNCTION_KEY
+                this.chLastMaxNumber = this.chCurrentCounter;
+                memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chLastMaxNumber + 1);
+                #endif
                 this.chState = UPDATE_LINE;
             } else {
                 this.chState = CHECK_DELETE;
@@ -249,10 +253,6 @@ fsm_rt_t task_console(console_print_t *ptThis)
                                 this.ptProcessingString->pTarget,
                                 this.pchCurrentBuffer,
                                 this.hwTokens)) {
-                #if VSF_USE_FUNCTION_KEY
-                this.chLastMaxNumber = this.chCurrentCounter;
-                memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chLastMaxNumber + 1);
-                #endif
                 TASK_CONSOLE_RESET_FSM();
                 return fsm_rt_cpl;
             }
