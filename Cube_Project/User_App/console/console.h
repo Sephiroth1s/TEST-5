@@ -5,6 +5,21 @@
 #include "../check_string/check_string.h"
 #include "../event/event.h"
 
+typedef fsm_rt_t print_token_handler_t(void *, uint8_t *, uint16_t);
+typedef struct print_token_evt_handler_t print_token_evt_handler_t;
+struct print_token_evt_handler_t {
+    print_token_handler_t *fnPrintToken;
+    void *pTarget;
+};
+
+typedef struct console_token_t console_token_t;
+struct console_token_t {
+    uint8_t chState;
+    void *pTarget;
+    print_token_evt_handler_t *ptPrintToken;
+    uint16_t hwTokens;
+};
+
 typedef fsm_rt_t console_token_handler_t(void *, uint8_t *);
 typedef struct console_token_evt_handler_t console_token_evt_handler_t;
 struct console_token_evt_handler_t {
@@ -12,12 +27,6 @@ struct console_token_evt_handler_t {
     void *pTarget;
 };
 
-typedef fsm_rt_t console_token_user_app_handler_t(void *, uint8_t*,uint16_t);
-typedef struct console_token_user_app_evt_handler_t console_token_user_app_evt_handler_t;
-struct console_token_user_app_evt_handler_t {
-    console_token_user_app_handler_t *fnConsoleTokenUserApp;
-    void *pTarget;
-};
 
 #if VSF_USE_FUNCTION_KEY
 typedef struct function_key_evt_handler_t function_key_evt_handler_t;
@@ -31,7 +40,7 @@ struct function_key_evt_handler_t {
     uint8_t *pchLastBuffer;
     uint8_t *pchCurrentBuffer;
     void *pOutputTarget;
-    function_key_function_t *fnSpecialKey;
+    function_key_function_t *fnFunctionKey;
 };
 #endif
 
@@ -49,27 +58,27 @@ typedef struct {
 #if VSF_USE_FUNCTION_KEY
     uint8_t *pchLastBuffer;
     uint8_t chLastMaxNumber;
-    function_key_evt_handler_t *ptSpecialKey;
+    function_key_evt_handler_t *ptFunctionKey;
 #endif
-} console_print_t;
+} console_frontend_t;
 
 typedef struct {
     read_byte_evt_handler_t *ptReadByteEvent;
-    console_token_evt_handler_t *ptProcessingString;
+    console_token_evt_handler_t *ptConsoleToken;
     uint8_t chMaxNumber;
     uint8_t *pchCurrentBuffer;
     void *pOutputTarget;
 #if VSF_USE_FUNCTION_KEY
     uint8_t *pchLastBuffer;
-    function_key_evt_handler_t *ptSpecialKey;
+    function_key_evt_handler_t *ptFunctionKey;
 #endif
-} console_print_cfg_t;
+} console_frontend_cfg_t;
 
-extern bool task_console_init(console_print_t *ptThis, console_print_cfg_t *ptCFG);
-extern fsm_rt_t task_console(console_print_t *ptThis);
+extern bool console_frontend_init(console_frontend_t *ptThis, console_frontend_cfg_t *ptCFG);
+extern fsm_rt_t console_frontend(console_frontend_t *ptThis);
 #if VSF_USE_FUNCTION_KEY
 static fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber);
 #endif
-static uint8_t* find_token(uint8_t *pchBuffer,uint8_t *pchSeperators, uint16_t *hwTokens);
-
+static uint8_t *find_token(uint8_t *pchBuffer, uint16_t *hwTokens);
+extern fsm_rt_t console_token(console_token_t *ptThis, uint8_t *pchBuffer);
 #endif

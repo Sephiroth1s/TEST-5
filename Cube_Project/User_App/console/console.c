@@ -18,7 +18,7 @@
 
 POOL(print_str) s_tPrintFreeList;
 
-bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
+bool console_frontend_init(console_frontend_t *ptThis,console_frontend_cfg_t *ptCFG)
 {
     enum { 
         START 
@@ -29,25 +29,25 @@ bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
             || (NULL == ptCFG->pOutputTarget)
             || (NULL == ptCFG->ptReadByteEvent) 
             || (NULL == ptCFG->ptReadByteEvent->fnReadByte)
-            || (NULL == ptCFG->ptProcessingString)
-            || (NULL == ptCFG->ptProcessingString->fnConsoleToken)) {
+            || (NULL == ptCFG->ptConsoleToken)
+            || (NULL == ptCFG->ptConsoleToken->fnConsoleToken)) {
         return false;
     }
 
 #if VSF_USE_FUNCTION_KEY
-    if(        (NULL == ptCFG->ptSpecialKey)
-            || (NULL == ptCFG->ptSpecialKey->ptRepeatByte)
-            || (NULL == ptCFG->ptSpecialKey->ptRepeatLine)){
+    if(        (NULL == ptCFG->ptFunctionKey)
+            || (NULL == ptCFG->ptFunctionKey->ptRepeatByte)
+            || (NULL == ptCFG->ptFunctionKey->ptRepeatLine)){
         return false;
     }
     this.pchLastBuffer = ptCFG->pchLastBuffer;
     this.chLastMaxNumber = 0;
-    this.ptSpecialKey = ptCFG->ptSpecialKey;
-    this.ptSpecialKey->chLastCounter = 0;
-    this.ptSpecialKey->pOutputTarget = ptCFG->pOutputTarget;
-    this.ptSpecialKey->pchLastBuffer = ptCFG->pchLastBuffer;
-    this.ptSpecialKey->pchCurrentBuffer = ptCFG->pchCurrentBuffer;
-    this.ptSpecialKey->fnSpecialKey = &function_key;
+    this.ptFunctionKey = ptCFG->ptFunctionKey;
+    this.ptFunctionKey->chLastCounter = 0;
+    this.ptFunctionKey->pOutputTarget = ptCFG->pOutputTarget;
+    this.ptFunctionKey->pchLastBuffer = ptCFG->pchLastBuffer;
+    this.ptFunctionKey->pchCurrentBuffer = ptCFG->pchCurrentBuffer;
+    this.ptFunctionKey->fnFunctionKey = &function_key;
 #endif
 
     this.chState = START;
@@ -55,11 +55,11 @@ bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
     this.pchCurrentBuffer = ptCFG->pchCurrentBuffer;
     this.ptReadByteEvent = ptCFG->ptReadByteEvent;
     this.pOutputTarget = ptCFG->pOutputTarget;
-    this.ptConsoleToken = ptCFG->ptProcessingString;
+    this.ptConsoleToken = ptCFG->ptConsoleToken;
     return true;
 }
 
-fsm_rt_t task_console(console_print_t *ptThis)
+fsm_rt_t console_frontend(console_frontend_t *ptThis)
 {
     enum {
         START,
@@ -77,8 +77,7 @@ fsm_rt_t task_console(console_print_t *ptThis)
         IS_EMPTY,
         DELETE_BYTE,
         PRINT_ENTER,
-        FIND_TOKEN,
-        PROCESSING_STRING
+        USER_HANDLER
     };
     uint8_t *pchTemp;
     if (NULL == ptThis) {
@@ -110,8 +109,8 @@ fsm_rt_t task_console(console_print_t *ptThis)
             }
         #if VSF_USE_FUNCTION_KEY
         case VSF_USE_FUNCTION_KEY_F1_F3:
-            if (fsm_rt_cpl == this.ptSpecialKey->fnSpecialKey(
-                                  this.ptSpecialKey, 
+            if (fsm_rt_cpl == this.ptFunctionKey->fnFunctionKey(
+                                  this.ptFunctionKey, 
                                   &this.chCurrentCounter,
                                   &this.chLastMaxNumber)) {
                 this.chState = READ_BYTE;
@@ -199,10 +198,6 @@ fsm_rt_t task_console(console_print_t *ptThis)
         case CHECK_ENTER:
         GOTO_CHECK_ENTER:
             if (this.chByte == '\x0d') {
-                #if VSF_USE_FUNCTION_KEY
-                this.chLastMaxNumber = this.chCurrentCounter;
-                memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chLastMaxNumber + 1);
-                #endif
                 this.chState = UPDATE_LINE;
             } else {
                 this.chState = CHECK_DELETE;
@@ -238,21 +233,16 @@ fsm_rt_t task_console(console_print_t *ptThis)
                 TASK_CONSOLE_RESET_FSM();
                 return fsm_rt_cpl;
             }
-            this.chState = FIND_TOKEN;
+            #if VSF_USE_FUNCTION_KEY
+            this.chLastMaxNumber = this.chCurrentCounter;
+            memcpy(this.pchLastBuffer, this.pchCurrentBuffer, this.chLastMaxNumber + 1);
+            #endif
+            this.chState = USER_HANDLER;
             // break;
-        case FIND_TOKEN:
-        GOTO_FIND_TOKEN:
-            if (NULL == find_token(this.pchCurrentBuffer, CONSOLE_SEPERATORS, &this.hwTokens)) {
-                this.chState = FIND_TOKEN;
-                goto GOTO_FIND_TOKEN;
-            }
-            this.chState = PROCESSING_STRING;
-            break;
-        case PROCESSING_STRING:
-            if (fsm_rt_cpl == this.ptProcessingString->fnProcessingString(
-                                this.ptProcessingString->pTarget,
-                                this.pchCurrentBuffer,
-                                this.hwTokens)) {
+        case USER_HANDLER:
+            if (fsm_rt_cpl == this.ptConsoleToken->fnConsoleToken(
+                                this.ptConsoleToken->pTarget,
+                                this.pchCurrentBuffer)) {
                 TASK_CONSOLE_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -357,15 +347,48 @@ fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCoun
 }
 #endif
 
+fsm_rt_t console_token(console_token_t *ptThis, uint8_t*pchBuffer)
+{
+    enum { 
+        START, 
+        FIND_TOKEN, 
+        USER_HANDLER 
+    };
+    switch (this.chState) {
+        case START:
+            this.hwTokens = 0;
+            this.chState = FIND_TOKEN;
+            // break;
+        case FIND_TOKEN:
+            if (find_token(pchBuffer, &this.hwTokens) != NULL) {
+                this.chState = USER_HANDLER;
+            }
+            break;
+        case USER_HANDLER:
+            if (fsm_rt_cpl == this.ptPrintToken->fnPrintToken(
+                                            this.ptPrintToken->pTarget,
+                                            pchBuffer,
+                                            this.hwTokens)) {
+                TASK_CONSOLE_RESET_FSM();
+                return fsm_rt_cpl;
+            }
+            break;
+        default:
+            return fsm_rt_err;
+            break;
+    }
+    return fsm_rt_on_going;
+}
+
 uint8_t* find_token(uint8_t *pchBuffer, uint16_t *hwTokens)
 {
-    if ((pchBuffer == NULL) || (pchSeperators == NULL)) {
+    if (pchBuffer == NULL) {
         return NULL;
     }
-    uint8_t *pchTempSeperators;
+    static uint8_t *pchTempSeperators;
     bool bFlag;
     while (*pchBuffer != '\0') {
-        pchTempSeperators = pchSeperators;
+        pchTempSeperators = CONSOLE_SEPERATORS;
         bFlag = false;
         while (*pchTempSeperators != '\0') {
             if (*pchTempSeperators++ == *pchBuffer) {
@@ -378,15 +401,15 @@ uint8_t* find_token(uint8_t *pchBuffer, uint16_t *hwTokens)
         }
         ++pchBuffer;
     }
-    
+
     uint8_t *pchReadBuffer = pchBuffer;
     uint8_t *pchWriteBuffer = pchBuffer;
     uint8_t chCounter = 0;
     uint8_t chSizeBuffer = strlen(pchBuffer);
     for (uint8_t chBufferCounter = 0; chBufferCounter <= chSizeBuffer; chBufferCounter++) {
-        pchTempSeperators = pchSeperators;
+        pchTempSeperators = CONSOLE_SEPERATORS;
         bFlag = false;
-        for (uint8_t chSeperatorsCounter = 0; chSeperatorsCounter <= strlen(pchSeperators); chSeperatorsCounter++) {
+        for (uint8_t chSeperatorsCounter = 0; chSeperatorsCounter <= strlen(CONSOLE_SEPERATORS); chSeperatorsCounter++) {
             if (*pchTempSeperators++ == *pchReadBuffer) {
                 bFlag = true;
                 break;

@@ -40,7 +40,7 @@ static event_t s_tRepeatLineEvent,s_tRepeatByteEvent;
 static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
 
 static bool console_input(uint8_t chByte);
-static fsm_rt_t processing_string(print_token_t *ptThis, uint8_t *pchTokens, uint16_t hwTokens);
+static fsm_rt_t print_token(print_token_t *ptThis, uint8_t *pchTokens, uint16_t hwTokens);
 static void repeat_msg_handler(msg_t *ptMsg);
 
 extern bool serial_out(uint8_t chByte);
@@ -65,22 +65,23 @@ int main(void)
     enum { 
         START 
     };
-    static function_key_evt_handler_t s_tSpecialKey={START,&s_tRepeatByteEvent,&s_tRepeatLineEvent};
-    static print_token_t s_tPrintBufferTarget = {START, &s_tFIFOout};
+    static function_key_evt_handler_t s_tSpecialKey = {START, &s_tRepeatByteEvent, &s_tRepeatLineEvent};
+    static print_token_t s_tPrintToken = {START, &s_tFIFOout};
+    const static print_token_evt_handler_t c_tPrintTokenHandler = {&print_token, &s_tPrintToken};
+    static console_token_t s_tConsoleToken = {START, &s_tFIFOout, &c_tPrintTokenHandler};
     static uint8_t s_chBuffer[CONSOLE_BUFFER_SIZE + 1] = {'\0'};
     static uint8_t s_chLastBuffer[UBOUND(s_chBuffer)] = {'\0'};
     const static read_byte_evt_handler_t c_tReadByteEvent = {&dequeue_byte, &s_tFIFOConsolein};
-    const static processing_string_evt_handler_t c_tProcessingString = {&processing_string, &s_tPrintBufferTarget};
-    const static console_print_cfg_t c_tConsoleCFG = {
+    const static console_token_evt_handler_t c_tProcessingString = {&console_token, &s_tConsoleToken};
+    const static console_frontend_cfg_t c_tConsoleCFG = {
                                         &c_tReadByteEvent,
                                         &c_tProcessingString,
                                         UBOUND(s_chBuffer),
                                         s_chBuffer,
                                         &s_tFIFOout,
                                         s_chLastBuffer,
-                                        &s_tSpecialKey
-                                        };
-    static console_print_t s_tConsole;
+                                        &s_tSpecialKey};
+    static console_frontend_t s_tConsole;
     const static msg_t c_tMSGMap[] = {
                         {"\x1b\x4f\x50", &s_tRepeatByteEvent, &repeat_msg_handler},
                         {"\x1b\x4f\x51", NULL, NULL},
@@ -121,7 +122,7 @@ int main(void)
     static check_use_peek_t s_tCheckWordsUsePeek;
     system_init();
     led_init();
-    task_console_init(&s_tConsole, &c_tConsoleCFG);
+    console_frontend_init(&s_tConsole, &c_tConsoleCFG);
     INIT_EVENT(&s_tRepeatByteEvent,false,false);
     INIT_EVENT(&s_tRepeatLineEvent,false,false);
     POOL_INIT(print_str, &s_tPrintFreeList);
@@ -134,7 +135,7 @@ int main(void)
     LED1_OFF();
     while (1) {
         breath_led();
-        task_console(&s_tConsole);
+        console_frontend(&s_tConsole);
         CHECK_USE_PEEK.CheckUsePeek(&s_tCheckWordsUsePeek);
         serial_in_task();
         serial_out_task();
@@ -157,7 +158,7 @@ bool console_input(uint8_t chByte)
     return false;
 }
 
-fsm_rt_t processing_string(print_token_t *ptThis, uint8_t *pchTokens, uint16_t hwTokens)
+fsm_rt_t print_token(print_token_t *ptThis, uint8_t *pchTokens, uint16_t hwTokens)
 {
     enum {
         START,
