@@ -30,7 +30,7 @@ bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
             || (NULL == ptCFG->ptReadByteEvent) 
             || (NULL == ptCFG->ptReadByteEvent->fnReadByte)
             || (NULL == ptCFG->ptProcessingString)
-            || (NULL == ptCFG->ptProcessingString->fnProcessingString)) {
+            || (NULL == ptCFG->ptProcessingString->fnConsoleToken)) {
         return false;
     }
 
@@ -55,7 +55,7 @@ bool task_console_init(console_print_t *ptThis,console_print_cfg_t *ptCFG)
     this.pchCurrentBuffer = ptCFG->pchCurrentBuffer;
     this.ptReadByteEvent = ptCFG->ptReadByteEvent;
     this.pOutputTarget = ptCFG->pOutputTarget;
-    this.ptProcessingString = ptCFG->ptProcessingString;
+    this.ptConsoleToken = ptCFG->ptProcessingString;
     return true;
 }
 
@@ -357,7 +357,7 @@ fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCoun
 }
 #endif
 
-uint8_t* find_token(uint8_t *pchBuffer,uint8_t *pchSeperators, uint16_t *hwTokens)
+uint8_t* find_token(uint8_t *pchBuffer, uint16_t *hwTokens)
 {
     if ((pchBuffer == NULL) || (pchSeperators == NULL)) {
         return NULL;

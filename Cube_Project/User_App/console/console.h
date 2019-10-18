@@ -5,10 +5,17 @@
 #include "../check_string/check_string.h"
 #include "../event/event.h"
 
-typedef fsm_rt_t console_token_handler_t(void *pThis, uint8_t *pchTokens, uint16_t hwTokens);
-typedef struct processing_string_evt_handler_t processing_string_evt_handler_t;
-struct processing_string_evt_handler_t {
-    console_token_handler_t *fnProcessingString;
+typedef fsm_rt_t console_token_handler_t(void *, uint8_t *);
+typedef struct console_token_evt_handler_t console_token_evt_handler_t;
+struct console_token_evt_handler_t {
+    console_token_handler_t *fnConsoleToken;
+    void *pTarget;
+};
+
+typedef fsm_rt_t console_token_user_app_handler_t(void *, uint8_t*,uint16_t);
+typedef struct console_token_user_app_evt_handler_t console_token_user_app_evt_handler_t;
+struct console_token_user_app_evt_handler_t {
+    console_token_user_app_handler_t *fnConsoleTokenUserApp;
     void *pTarget;
 };
 
@@ -31,7 +38,7 @@ struct function_key_evt_handler_t {
 typedef struct {
     uint8_t chState;
     read_byte_evt_handler_t *ptReadByteEvent;
-    processing_string_evt_handler_t *ptProcessingString;
+    console_token_evt_handler_t *ptConsoleToken; 
     void *pOutputTarget;
     print_str_t *ptPrintStr;
     uint8_t *pchCurrentBuffer;
@@ -48,7 +55,7 @@ typedef struct {
 
 typedef struct {
     read_byte_evt_handler_t *ptReadByteEvent;
-    processing_string_evt_handler_t *ptProcessingString;
+    console_token_evt_handler_t *ptProcessingString;
     uint8_t chMaxNumber;
     uint8_t *pchCurrentBuffer;
     void *pOutputTarget;
