@@ -5,10 +5,35 @@
 #include "../check_string/check_string.h"
 #include "../event/event.h"
 
-typedef fsm_rt_t print_token_handler_t(void *, uint8_t *, uint16_t);
-typedef struct print_token_evt_handler_t print_token_evt_handler_t;
-struct print_token_evt_handler_t {
-    print_token_handler_t *fnPrintToken;
+typedef struct cmd_t cmd_t;
+typedef fsm_rt_t cmd_handler_t(cmd_t *);
+struct cmd_t {
+    uint8_t *pchCmd;
+    uint8_t *pchHelpInfo;
+    cmd_handler_t *fnPrintToken;      
+};
+
+typedef command_line_parsing_t command_line_parsing_t;
+struct command_line_parsing_t{
+    uint8_t chState;
+    uint8_t chCmdNumber;
+    uint8_t chCurrentCounter;
+    cmd_t *ptCmd[2];
+    uint8_t chCmdStaticNumber;
+    uint8_t chCurrentStaticCmdCounter;
+    cmd_t *ptCmdStatic;
+    cmd_t *ptCurrentTempCmd;
+};
+typedef command_line_parsing_cfg_t command_line_parsing_cfg_t;
+struct command_line_parsing_cfg_t{
+    uint8_t chCmdNumber;
+    cmd_t *ptCmd;
+};
+
+typedef fsm_rt_t token_parsing_handler_t(void *, uint8_t *, uint16_t);
+typedef struct token_parsing_evt_handler_t token_parsing_evt_handler_t;
+struct token_parsing_evt_handler_t {
+    token_parsing_handler_t *fnPrintToken;      // token 数组处理函数
     void *pTarget;
 };
 
@@ -16,7 +41,7 @@ typedef struct console_token_t console_token_t;
 struct console_token_t {
     uint8_t chState;
     void *pTarget;
-    print_token_evt_handler_t *ptPrintToken;
+    token_parsing_evt_handler_t *ptPrintToken;
     uint16_t hwTokens;
 };
 
