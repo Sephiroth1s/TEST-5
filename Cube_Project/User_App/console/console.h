@@ -8,9 +8,10 @@
 typedef struct cmd_t cmd_t;
 typedef fsm_rt_t cmd_handler_t(cmd_t *);
 struct cmd_t {
+    void *pTarget;
     uint8_t *pchCmd;
     uint8_t *pchHelpInfo;
-    cmd_handler_t *fnPrintToken;      
+    cmd_handler_t *fnPrintToken;
 };
 
 typedef command_line_parsing_t command_line_parsing_t;
@@ -106,4 +107,12 @@ static fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurr
 #endif
 static uint8_t *find_token(uint8_t *pchBuffer, uint16_t *hwTokens);
 extern fsm_rt_t console_token(console_token_t *ptThis, uint8_t *pchBuffer);
+
+extern bool console_cmd_init(command_line_parsing_t* ptThis, command_line_parsing_cfg_t *ptCFG);
+static fsm_rt_t command_line_parsing(command_line_parsing_t *pThis, uint8_t *pchBuffer, uint16_t hwTokens);
+static fsm_rt_t print_all_help_info(cmd_t *ptcmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber);
+static fsm_rt_t clear_screen(cmd_t *ptcmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber);
+static fsm_rt_t print_help_info(cmd_t *ptcmd);
+static fsm_rt_t test(cmd_t *ptcmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber);
+
 #endif

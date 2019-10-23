@@ -16,6 +16,21 @@
         this.chState = START;    \
     } while (0);
 
+#ifndef CONSOLE_DEFAULT_CMD
+#warning No defined macro SUPPORT_CONSOLE_DEFAULT_CMD_EX_EN for extended command, default two cmd is used.
+#define CONSOLE_DEFAULT_CMD s_tDefaultCmd
+#endif
+
+static cmd_t s_tDefaultCmd[]={
+                {NULL,"help","    help-Get command list of all available commands",NULL},
+                {NULL,"clear","Clear-clear the screen",NULL},
+                #ifdef SUPPORT_CONSOLE_DEFAULT_CMD_EX_EN
+                {NULL,"test1","    test1-just a test1",NULL},
+                {NULL,"test2","    test1-just a test2",NULL},
+                {NULL,"test3","    test1-just a test3",NULL}
+                #endif
+                };
+
 POOL(print_str) s_tPrintFreeList;
 
 bool console_frontend_init(console_frontend_t *ptThis,console_frontend_cfg_t *ptCFG)
@@ -429,4 +444,29 @@ uint8_t* find_token(uint8_t *pchBuffer, uint16_t *hwTokens)
         pchReadBuffer++;
     }
     return pchBuffer;
+}
+
+bool console_cmd_init(command_line_parsing_t* ptThis, command_line_parsing_cfg_t *ptCFG)
+{
+
+}
+fsm_rt_t command_line_parsing(command_line_parsing_t *pThis, uint8_t *pchBuffer, uint16_t hwTokens)
+{
+
+}
+fsm_rt_t print_all_help_info(cmd_t *ptcmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber)
+{
+
+}
+fsm_rt_t clear_screen(cmd_t *ptcmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber)
+{
+
+}
+fsm_rt_t print_help_info(cmd_t *ptcmd)
+{
+
+}
+fsm_rt_t test(cmd_t *ptcmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber)
+{
+    
 }
