@@ -9,6 +9,7 @@
 #define CURSOR_RIGHT "\033[C"        // 光标右移 1 行
 #define ENTER "\x0A\x0D"             // 换行
 #define ERASE_LINE "\033[2K"         //  清楚当前行
+#define CLEAR "\033c"              // 清屏
 
 #define this (*ptThis)
 #define TASK_CONSOLE_RESET_FSM() \
@@ -16,20 +17,14 @@
         this.chState = START;    \
     } while (0);
 
+#ifdef SUPPORT_CONSOLE_DEFAULT_CMD_EX_EN
+#define CONSOLE_DEFAULT_CMD s_tDefaultCmd
+#else
 #ifndef CONSOLE_DEFAULT_CMD
 #warning No defined macro SUPPORT_CONSOLE_DEFAULT_CMD_EX_EN for extended command, default two cmd is used.
 #define CONSOLE_DEFAULT_CMD s_tDefaultCmd
 #endif
-
-static cmd_t s_tDefaultCmd[]={
-                {NULL,"help","    help-Get command list of all available commands",NULL},
-                {NULL,"clear","Clear-clear the screen",NULL},
-                #ifdef SUPPORT_CONSOLE_DEFAULT_CMD_EX_EN
-                {NULL,"test1","    test1-just a test1",NULL},
-                {NULL,"test2","    test1-just a test2",NULL},
-                {NULL,"test3","    test1-just a test3",NULL}
-                #endif
-                };
+#endif
 
 POOL(print_str) s_tPrintFreeList;
 
@@ -448,14 +443,48 @@ uint8_t* find_token(uint8_t *pchBuffer, uint16_t *hwTokens)
 
 bool console_cmd_init(command_line_parsing_t* ptThis, command_line_parsing_cfg_t *ptCFG)
 {
+    enum {
+        START
+    };
+    if ((NULL == ptThis) || (NULL == ptCFG)) {
+        return false;
+    }
+    static pring_all_help_info_t s_tPrintAllHelpInfo;
+    s_tPrintAllHelpInfo.chState = START;
+    s_tPrintAllHelpInfo.pTarget = ptCFG->pTarget;
+    static clear_screen_t s_tClearScreen;
+    s_tClearScreen.chState = START;
+    s_tClearScreen.pTarget = ptCFG->pTarget;
+    static cmd_t s_tDefaultCmd[]={
+                {&s_tPrintAllHelpInfo,"help","    help-Get command list of all available commands",&print_all_help_info},
+                {&s_tClearScreen,"clear","Clear-clear the screen",&clear_screen},
+                #ifdef SUPPORT_CONSOLE_DEFAULT_CMD_EX_EN
+                {NULL,"test1","    test1-just a test1",NULL},
+                {NULL,"test2","    test1-just a test2",NULL},
+                {NULL,"test3","    test1-just a test3",NULL}
+                #endif
+                };
 
+    if (NULL == ptCFG->ptCmd) {
+        this.chCmdUserNumber = 0;
+        this.ptCmd[1] = NULL;
+    } else {
+        this.chCmdUserNumber = ptCFG->chCmdNumber;
+        this.ptCmd[1] = ptCFG->ptCmd;
+    }
+    this.chState = START;
+    this.chCmdDefaultNumber = UBOUND(CONSOLE_DEFAULT_CMD);
+    this.ptCmd[0] = CONSOLE_DEFAULT_CMD;
+    this.ptCmd[0] = CONSOLE_DEFAULT_CMD;
+    return true;
 }
+
 fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens)
 {
     enum {
         START,
-        CHECK_TOKEN1_DEFAUTL,
-        CHECK_CMD_DEFAUTL,
+        CHECK_TOKEN1_DEFAULT,
+        CHECK_CMD_DEFAULT,
         CHECK_USER_CMD,
         CHECK_TOKEN1_USER,
         CHECK_CMD_USER,
@@ -475,18 +504,18 @@ fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pchBuffer
             this.chCurrentDefaultCmdCounter = 0;
             this.hwTokensCounter = 0;
             this.pchCurrentTokens = pchBuffer;
-            this.chState = CHECK_TOKEN1_DEFAUTL;
+            this.chState = CHECK_TOKEN1_DEFAULT;
             // break;
-        case CHECK_TOKEN1_DEFAUTL:
+        case CHECK_TOKEN1_DEFAULT:
         GOTO_CHECK_TOKEN1_DEFAULT:
             if (this.chCurrentDefaultCmdCounter < this.chCmdDefaultNumber) {
-                this.chState = CHECK_CMD_DEFAUTL;
+                this.chState = CHECK_CMD_DEFAULT;
             } else {
                 this.chState = CHECK_USER_CMD;
                 goto GOTO_CHECK_USER_CMD;
             }
             // break;
-        case CHECK_CMD_DEFAUTL:
+        case CHECK_CMD_DEFAULT:
             if (strcmp(this.pchCurrentTokens,
                        this.ptCmd[0][this.chCurrentDefaultCmdCounter].pchCmd) == 0) {
                 this.ptCurrentTempCmd = &this.ptCmd[0][this.chCurrentDefaultCmdCounter];
@@ -494,7 +523,7 @@ fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pchBuffer
                 this.chState = CHECK_TOKEN_IS_EMPTY;
             } else {
                 this.chCurrentDefaultCmdCounter++;
-                this.chState = CHECK_TOKEN1_DEFAUTL;
+                this.chState = CHECK_TOKEN1_DEFAULT;
                 goto GOTO_CHECK_TOKEN1_DEFAULT;
             }
             break;
@@ -520,7 +549,8 @@ fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pchBuffer
             // break;
         case PRINT_HELP_INFO:
             if (fsm_rt_cpl == print_help_info(this.ptCurrentTempCmd)) {
-                this.chState = CHECK_TOKEN_IS_EMPTY;
+                TASK_CONSOLE_RESET_FSM();
+                return fsm_rt_cpl;
             }
             break;
         case CMD_HANDLER:
@@ -530,6 +560,7 @@ fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pchBuffer
                                   this.chCmdDefaultNumber,
                                   this.chCmdUserNumber)) {
                 TASK_CONSOLE_RESET_FSM();
+                return fsm_rt_cpl;
             }
             break;
         case CHECK_USER_CMD:
@@ -567,25 +598,28 @@ fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pchBuffer
     }
     return fsm_rt_on_going;
 }
+
 fsm_rt_t print_all_help_info(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber)
 {
-    enum{
+    enum {
         START,
         PRING_FIRST_HELP_INFO_INIT,
         PRITN_FIRST_HELP_INFO,
         PRINT_DEFAULT_CMD_LOOP,
-        PRINT_HELP_INFO,
+        PRINT_HELP_INFO_DEFAULT,
         CHECK_USER_CMD,
         PRINT_USER_CMD_LOOP,
-        PRINT_HELP_INFO_DEFAULT,
-        CHEKC_USER_CMD,
-        PRINT_USER_CMD_LOOP,
-        PRINT_HELP_INFO_USER,
+        PRINT_HELP_INFO_USER
     };
-    pring_all_help_info_t *ptThis=(pring_all_help_info_t*)ptCmd->pTarget;
-    this.pptThis=(cmd_t**)ptCmd;
-    switch (this.chState)
-    {
+    if (NULL == ptCmd) {
+        return fsm_rt_err;
+    }
+    if (NULL == ptCmd->pTarget) {
+        return fsm_rt_err;
+    }
+    pring_all_help_info_t *ptThis = (pring_all_help_info_t *)ptCmd->pTarget;
+    this.pptThis = (cmd_t **)ptCmd;
+    switch (this.chState) {
         case START:
             this.chDefaultCounter = 1;
             this.chState = PRING_FIRST_HELP_INFO_INIT;
@@ -595,40 +629,171 @@ fsm_rt_t print_all_help_info(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t c
             if (this.ptPrintStr == NULL) {
                 break;
             } else {
-                do
-                {
+                do {
                     const print_str_cfg_t c_tCFG = {
                                     ptCmd->pchHelpInfo, 
-                                    this.pTarget};
+                                    this.pTarget,
+                                    &enqueue_byte};
                     PRINT_STRING.Init(this.ptPrintStr,&c_tCFG);
                 } while (0);
-                this.chState=PRINT_HELP_INFO;
+                this.chState=PRITN_FIRST_HELP_INFO;
             }
             // break;
-        case PRINT_HELP_INFO:
+        case PRITN_FIRST_HELP_INFO:
             if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
-                POOL_ALLOCATE(print_str,&s_tPrintFreeList,this.ptPtintStr);
-                this.chState=PRINT_DEFAULT_CMD_LOOP;
+                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
+                this.chState = PRINT_DEFAULT_CMD_LOOP;
             }
             break;
         case PRINT_DEFAULT_CMD_LOOP:
-            if(this.chDefaultCounter<chCmdDefaultNumber){
-
+            if (this.chDefaultCounter < chCmdDefaultNumber) {
+                this.chState = PRINT_HELP_INFO_DEFAULT;
+            } else{
+                this.chState=CHECK_USER_CMD;
+                goto GOTO_CHECK_USER_CMD;
             }
+            // break
+        case PRINT_HELP_INFO_DEFAULT:
+            if (fsm_rt_cpl == print_help_info(&this.pptThis[0][this.chDefaultCounter])) {
+                // printf("%s",(&this.pptThis[0][this.chDefaultCounter])->pchHelpInfo);
+                this.chDefaultCounter++;
+                this.chState = PRINT_DEFAULT_CMD_LOOP;
+            }
+            break;
+        case CHECK_USER_CMD:
+        GOTO_CHECK_USER_CMD:
+            if (this.pptThis[1] == NULL) {
+                TASK_CONSOLE_RESET_FSM();
+                return fsm_rt_cpl;
+            } else {
+                this.chUserCounter = 0;
+                this.chState = PRINT_USER_CMD_LOOP;
+            }
+            // break;
+        case PRINT_USER_CMD_LOOP:
+            if (this.chUserCounter < chCmdUserNumber) {
+                this.chState = PRINT_HELP_INFO_USER;
+            } else {
+                TASK_CONSOLE_RESET_FSM();
+                return fsm_rt_cpl;
+            }
+            // break;
+        case PRINT_HELP_INFO_USER:
+            if (fsm_rt_cpl == print_help_info(&this.pptThis[1][this.chUserCounter])) {
+                this.chUserCounter;
+                this.chState = PRINT_USER_CMD_LOOP;
+            }
+            break;
         default:
+            return fsm_rt_err;
             break;
     }
+    return fsm_rt_on_going;
     
 }
-fsm_rt_t clear_screen(cmd_t *ptcmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber)
-{
 
-}
-fsm_rt_t print_help_info(cmd_t *ptcmd)
+fsm_rt_t clear_screen(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber)
 {
+     enum { 
+        START,
+        CLEAR_SCREEN_INIT,
+        CLEAR_SCREEN
+    };
+    if (NULL == ptCmd) {
+        return fsm_rt_err;
+    }
+    if (NULL == ptCmd->pTarget) {
+        return fsm_rt_err;
+    }
+    print_help_info_t *ptThis = (print_help_info_t *)ptCmd->pTarget;
+    switch (this.chState) {
+        case START:
+            this.chState = CLEAR_SCREEN_INIT;
+            // break;
+        case CLEAR_SCREEN_INIT:
+            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
+            if (this.ptPrintStr == NULL) {
+                break;
+            } else {
+                do {
+                    const print_str_cfg_t c_tCFG = {
+                                            CLEAR, 
+                                            this.pTarget,
+                                            &enqueue_byte};
+                    PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
+                } while (0);
+                this.chState = CLEAR_SCREEN;
+                // break;
+            }
+        case CLEAR_SCREEN:
+            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
+                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
+                TASK_CONSOLE_RESET_FSM();
+                return fsm_rt_cpl;
+            }
+            break;
+        default:
+            return fsm_rt_err;
+            break;
+    }
+    return fsm_rt_on_going;
+}
 
-}
-fsm_rt_t test(cmd_t *ptcmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber)
+fsm_rt_t print_help_info(cmd_t *ptCmd)
 {
-    
+    enum { 
+        START,
+        PRINT_HELP_INFO_INIT,
+        PRINT_HELP_INFO
+    };
+    if (NULL == ptCmd) {
+        // printf("1");
+        return fsm_rt_err;
+    }
+    if (NULL == ptCmd->pTarget) {
+        // printf("2");
+        return fsm_rt_err;
+    }
+    print_help_info_t *ptThis = (print_help_info_t *)ptCmd->pTarget;
+    // printf("-%s-",ptCmd->pchCmd);
+    switch (this.chState) {
+        case START:
+            this.chState = PRINT_HELP_INFO_INIT;
+            // break;
+        case PRINT_HELP_INFO_INIT:
+            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
+            if (this.ptPrintStr == NULL) {
+                // printf("3");
+                break;
+            } else {
+                do {
+                    const print_str_cfg_t c_tCFG = {
+                                            ptCmd->pchHelpInfo, 
+                                            this.pTarget,
+                                            &enqueue_byte};
+                    PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
+                } while (0);
+                this.chState = PRINT_HELP_INFO;
+                // break;
+            }
+        case PRINT_HELP_INFO:
+            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
+                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
+                TASK_CONSOLE_RESET_FSM();
+                return fsm_rt_cpl;
+            }
+            // printf("4");
+            break;
+        default:
+            // printf("error\r\n");
+            return fsm_rt_err;
+            break;
+    }
+    return fsm_rt_on_going;
+}
+
+fsm_rt_t test(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber)
+{
+    printf("test\r\n");
+    return fsm_rt_cpl;
 }
