@@ -456,8 +456,8 @@ bool console_cmd_init(command_line_parsing_t* ptThis, command_line_parsing_cfg_t
     s_tClearScreen.chState = START;
     s_tClearScreen.pTarget = ptCFG->pTarget;
     static cmd_t s_tDefaultCmd[]={
-                {&s_tPrintAllHelpInfo,"help","    help-Get command list of all available commands",&print_all_help_info},
-                {&s_tClearScreen,"clear","Clear-clear the screen",&clear_screen},
+                {&s_tPrintAllHelpInfo,"help","    help-Get command list of all available commands\r\n",&print_all_help_info},
+                {&s_tClearScreen,"clear","    Clear-clear the screen\r\n",&clear_screen},
                 #ifdef SUPPORT_CONSOLE_DEFAULT_CMD_EX_EN
                 {NULL,"test1","    test1-just a test1",NULL},
                 {NULL,"test2","    test1-just a test2",NULL},
@@ -465,13 +465,14 @@ bool console_cmd_init(command_line_parsing_t* ptThis, command_line_parsing_cfg_t
                 #endif
                 };
 
-    if (NULL == ptCFG->ptCmd) {
-        this.chCmdUserNumber = 0;
-        this.ptCmd[1] = NULL;
-    } else {
-        this.chCmdUserNumber = ptCFG->chCmdNumber;
-        this.ptCmd[1] = ptCFG->ptCmd;
-    }
+    // if (NULL == ptCFG->ptCmd) {
+    //     this.chCmdUserNumber = 0;
+    //     this.ptCmd[1] = NULL;
+    // } else {
+    //     this.chCmdUserNumber = ptCFG->chCmdNumber;
+    //     this.ptCmd[1] = ptCFG->ptCmd;
+    // }
+    this.ptCmd[1]=0x20000188;
     this.chState = START;
     this.chCmdDefaultNumber = UBOUND(CONSOLE_DEFAULT_CMD);
     this.ptCmd[0] = CONSOLE_DEFAULT_CMD;
@@ -618,7 +619,7 @@ fsm_rt_t print_all_help_info(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t c
         return fsm_rt_err;
     }
     pring_all_help_info_t *ptThis = (pring_all_help_info_t *)ptCmd->pTarget;
-    this.pptThis = (cmd_t **)ptCmd;
+    this.pptThis[0] = ptCmd;
     switch (this.chState) {
         case START:
             this.chDefaultCounter = 1;
@@ -655,7 +656,6 @@ fsm_rt_t print_all_help_info(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t c
             // break
         case PRINT_HELP_INFO_DEFAULT:
             if (fsm_rt_cpl == print_help_info(&this.pptThis[0][this.chDefaultCounter])) {
-                // printf("%s",(&this.pptThis[0][this.chDefaultCounter])->pchHelpInfo);
                 this.chDefaultCounter++;
                 this.chState = PRINT_DEFAULT_CMD_LOOP;
             }
@@ -747,15 +747,12 @@ fsm_rt_t print_help_info(cmd_t *ptCmd)
         PRINT_HELP_INFO
     };
     if (NULL == ptCmd) {
-        // printf("1");
         return fsm_rt_err;
     }
     if (NULL == ptCmd->pTarget) {
-        // printf("2");
         return fsm_rt_err;
     }
     print_help_info_t *ptThis = (print_help_info_t *)ptCmd->pTarget;
-    // printf("-%s-",ptCmd->pchCmd);
     switch (this.chState) {
         case START:
             this.chState = PRINT_HELP_INFO_INIT;
@@ -763,7 +760,6 @@ fsm_rt_t print_help_info(cmd_t *ptCmd)
         case PRINT_HELP_INFO_INIT:
             this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
             if (this.ptPrintStr == NULL) {
-                // printf("3");
                 break;
             } else {
                 do {
@@ -782,10 +778,8 @@ fsm_rt_t print_help_info(cmd_t *ptCmd)
                 TASK_CONSOLE_RESET_FSM();
                 return fsm_rt_cpl;
             }
-            // printf("4");
             break;
         default:
-            // printf("error\r\n");
             return fsm_rt_err;
             break;
     }

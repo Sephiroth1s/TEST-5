@@ -67,7 +67,7 @@ int main(void)
     };
     static function_key_evt_handler_t s_tSpecialKey = {START, &s_tRepeatByteEvent, &s_tRepeatLineEvent};
     const command_line_parsing_cfg_t c_tCmdParsingCFG={0,NULL,&s_tFIFOout};
-    static command_line_parsing_t s_tCmdParsing;s_tCmdParsing.
+    static command_line_parsing_t s_tCmdParsing;
     console_cmd_init(&s_tCmdParsing,&c_tCmdParsingCFG);
     const static token_parsing_evt_handler_t c_tTokenParsingHandler = {&command_line_parsing, &s_tCmdParsing};
     static console_token_t s_tConsoleToken = {START, &s_tFIFOout, &c_tTokenParsingHandler};

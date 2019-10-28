@@ -167,97 +167,177 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>84</LineNumber>
+          <LineNumber>657</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134220188</Address>
+          <Address>0</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>0</BreakIfRCount>
+          <Filename>..\User_App\console\console.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression></Expression>
+        </Bp>
+        <Bp>
+          <Number>1</Number>
+          <Type>0</Type>
+          <LineNumber>137</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134229348</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\Src\stm32f1xx_it.c</Filename>
+          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\Src\main.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Cube_Project\../Src/stm32f1xx_it.c\84</Expression>
+          <Expression>\\Cube_Project\../Src/main.c\137</Expression>
+        </Bp>
+        <Bp>
+          <Number>2</Number>
+          <Type>0</Type>
+          <LineNumber>478</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134226066</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\User_App\console\console.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\Cube_Project\../User_App/console/console.c\478</Expression>
+        </Bp>
+        <Bp>
+          <Number>3</Number>
+          <Type>0</Type>
+          <LineNumber>650</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134229792</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\User_App\console\console.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\Cube_Project\../User_App/console/console.c\650</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>chChar</ItemText>
+          <ItemText>s_tPrintAllHelpInfo</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>s_tTaskASem</ItemText>
+          <ItemText>s_tClearScreen</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>ptObj</ItemText>
+          <ItemText>s_tCmdParsing,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
           <WinNumber>1</WinNumber>
-          <ItemText>ptCfg</ItemText>
+          <ItemText>s_tCmdParsing.ptCmd</ItemText>
         </Ww>
         <Ww>
           <count>4</count>
           <WinNumber>1</WinNumber>
-          <ItemText>&amp;s_tCheckUsePeekCfg</ItemText>
+          <ItemText>s_tFIFOConsolein</ItemText>
         </Ww>
         <Ww>
           <count>5</count>
           <WinNumber>1</WinNumber>
-          <ItemText>ptTarget-&gt;chAgentIndex</ItemText>
+          <ItemText>s_tFIFOin</ItemText>
         </Ww>
         <Ww>
           <count>6</count>
           <WinNumber>1</WinNumber>
-          <ItemText>ptTarget-&gt;bIsRequestDrop</ItemText>
+          <ItemText>s_tFIFOout</ItemText>
         </Ww>
         <Ww>
           <count>7</count>
           <WinNumber>1</WinNumber>
-          <ItemText>ptTarget-&gt;chAgentNumber</ItemText>
+          <ItemText>s_chByteConsole,0x10</ItemText>
         </Ww>
         <Ww>
           <count>8</count>
           <WinNumber>1</WinNumber>
-          <ItemText>ptTarget-&gt;tFsmState</ItemText>
+          <ItemText>s_tDefaultCmd</ItemText>
         </Ww>
         <Ww>
           <count>9</count>
           <WinNumber>1</WinNumber>
-          <ItemText>s_tCheckHelloPCB</ItemText>
+          <ItemText>ptCmd-&gt;pTarget</ItemText>
         </Ww>
         <Ww>
           <count>10</count>
           <WinNumber>1</WinNumber>
-          <ItemText>s_chCheckStrPool</ItemText>
+          <ItemText>(*ptCmd)+1</ItemText>
         </Ww>
         <Ww>
           <count>11</count>
           <WinNumber>1</WinNumber>
-          <ItemText>ptThis-&gt;pchString</ItemText>
+          <ItemText>ptThis-&gt;pptThis+1</ItemText>
         </Ww>
         <Ww>
           <count>12</count>
           <WinNumber>1</WinNumber>
-          <ItemText>s_chBytein</ItemText>
+          <ItemText>s_tCmdParsing.ptCmd[1][0]</ItemText>
         </Ww>
         <Ww>
           <count>13</count>
           <WinNumber>1</WinNumber>
-          <ItemText>s_chByteout</ItemText>
+          <ItemText>s_tClearScreen</ItemText>
+        </Ww>
+        <Ww>
+          <count>14</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>ptThis-&gt;pptThis[0]</ItemText>
+        </Ww>
+        <Ww>
+          <count>15</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>s_tDefaultCmd</ItemText>
+        </Ww>
+        <Ww>
+          <count>16</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>(*(*ptThis-&gt;pptThis))</ItemText>
+        </Ww>
+        <Ww>
+          <count>17</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>s_tDefaultCmd[1]</ItemText>
         </Ww>
       </WatchWindow1>
+      <WatchWindow2>
+        <Ww>
+          <count>0</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>ptThis-&gt;pptThis</ItemText>
+        </Ww>
+        <Ww>
+          <count>1</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>ptCmd+3</ItemText>
+        </Ww>
+      </WatchWindow2>
       <MemoryWindow1>
         <Mm>
           <WinNumber>1</WinNumber>
-          <SubType>2</SubType>
-          <ItemText>0x20000ED0</ItemText>
+          <SubType>8</SubType>
+          <ItemText>0x20000008</ItemText>
           <AccSizeX>4</AccSizeX>
         </Mm>
       </MemoryWindow1>

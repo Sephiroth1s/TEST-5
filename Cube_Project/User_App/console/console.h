@@ -27,7 +27,7 @@ struct pring_all_help_info_t {
     void *pTarget;
     uint8_t chDefaultCounter;
     uint8_t chUserCounter;
-    cmd_t **pptThis;
+    cmd_t *pptThis[2];
     print_str_t *ptPrintStr;
 };
 
@@ -140,5 +140,6 @@ static fsm_rt_t print_all_help_info(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, ui
 static fsm_rt_t clear_screen(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber);
 static fsm_rt_t print_help_info(cmd_t *ptCmd);
 static fsm_rt_t test(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber);
+
 
 #endif
