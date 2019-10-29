@@ -14,6 +14,14 @@ struct cmd_t {
     cmd_handler_t *fnPrintToken;
 };
 
+typedef struct cmd_test_t cmd_test_t;  //  测试用 命令
+struct cmd_test_t {
+    uint8_t chState;
+    void *pTarget;
+    print_str_t *ptPrintStr;
+};
+
+
 typedef struct print_help_info_t print_help_info_t;         // 输出帮助信息控制块
 struct print_help_info_t {
     uint8_t chState;
@@ -139,7 +147,7 @@ extern fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pc
 static fsm_rt_t print_all_help_info(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber);
 static fsm_rt_t clear_screen(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber);
 static fsm_rt_t print_help_info(cmd_t *ptCmd);
-static fsm_rt_t test(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber);
+extern fsm_rt_t test(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber);
 
 
 #endif

@@ -135,7 +135,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGTARM</Key>
-          <Name>(1010=-1,-1,-1,-1,0)(1007=-1,-1,-1,-1,0)(1008=-1,-1,-1,-1,0)(1009=397,361,655,949,0)</Name>
+          <Name>(1010=-1,-1,-1,-1,0)(1007=-1,-1,-1,-1,0)(1008=-1,-1,-1,-1,0)(1009=397,276,655,864,0)</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -167,66 +167,66 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>657</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>0</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>0</BreakIfRCount>
-          <Filename>..\User_App\console\console.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression></Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
           <LineNumber>137</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134229348</Address>
+          <Address>134229324</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\Src\main.c</Filename>
+          <Filename>C:\Users\Sephiroth\Desktop\鍏徃浠ｇ爜1.8A\TEST-5\Cube_Project\Src\main.c</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\Cube_Project\../Src/main.c\137</Expression>
         </Bp>
         <Bp>
-          <Number>2</Number>
+          <Number>1</Number>
           <Type>0</Type>
           <LineNumber>478</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134226066</Address>
+          <Address>134226042</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\User_App\console\console.c</Filename>
+          <Filename>C:\Users\Sephiroth\Desktop\鍏徃浠ｇ爜1.8A\TEST-5\Cube_Project\User_App\console\console.c</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\Cube_Project\../User_App/console/console.c\478</Expression>
         </Bp>
         <Bp>
-          <Number>3</Number>
+          <Number>2</Number>
           <Type>0</Type>
           <LineNumber>650</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134229792</Address>
+          <Address>134229768</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\User_App\console\console.c</Filename>
+          <Filename>C:\Users\Sephiroth\Desktop\鍏徃浠ｇ爜1.8A\TEST-5\Cube_Project\User_App\console\console.c</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\Cube_Project\../User_App/console/console.c\650</Expression>
+        </Bp>
+        <Bp>
+          <Number>3</Number>
+          <Type>0</Type>
+          <LineNumber>659</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134229820</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>C:\Users\Sephiroth\Desktop\鍏徃浠ｇ爜1.8A\TEST-5\Cube_Project\User_App\console\console.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\Cube_Project\../User_App/console/console.c\659</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -320,12 +320,17 @@
           <WinNumber>1</WinNumber>
           <ItemText>s_tDefaultCmd[1]</ItemText>
         </Ww>
+        <Ww>
+          <count>18</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>ptThis-&gt;ptCmd</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>
           <count>0</count>
           <WinNumber>2</WinNumber>
-          <ItemText>ptThis-&gt;pptThis</ItemText>
+          <ItemText>ptThis-&gt;pptThis[1][0]</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
@@ -347,7 +352,7 @@
       <DebugFlag>
         <trace>0</trace>
         <periodic>1</periodic>
-        <aLwin>1</aLwin>
+        <aLwin>0</aLwin>
         <aCover>0</aCover>
         <aSer1>0</aSer1>
         <aSer2>0</aSer2>

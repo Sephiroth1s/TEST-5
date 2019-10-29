@@ -455,27 +455,34 @@ bool console_cmd_init(command_line_parsing_t* ptThis, command_line_parsing_cfg_t
     static clear_screen_t s_tClearScreen;
     s_tClearScreen.chState = START;
     s_tClearScreen.pTarget = ptCFG->pTarget;
+    static cmd_test_t s_tCmdTest1;
+    s_tClearScreen.chState = START;
+    s_tClearScreen.pTarget = ptCFG->pTarget;
+    static cmd_test_t s_tCmdTest2;
+    s_tClearScreen.chState = START;
+    s_tClearScreen.pTarget = ptCFG->pTarget;
+    static cmd_test_t s_tCmdTest3;
+    s_tClearScreen.chState = START;
+    s_tClearScreen.pTarget = ptCFG->pTarget;
     static cmd_t s_tDefaultCmd[]={
                 {&s_tPrintAllHelpInfo,"help","    help-Get command list of all available commands\r\n",&print_all_help_info},
                 {&s_tClearScreen,"clear","    Clear-clear the screen\r\n",&clear_screen},
                 #ifdef SUPPORT_CONSOLE_DEFAULT_CMD_EX_EN
-                {NULL,"test1","    test1-just a test1",NULL},
-                {NULL,"test2","    test1-just a test2",NULL},
-                {NULL,"test3","    test1-just a test3",NULL}
+                {&s_tCmdTest1,"test1","    test1-just a test1\r\n",&test},
+                {&s_tCmdTest2,"test2","    test1-just a test2\r\n",&test},
+                {&s_tCmdTest3,"test3","    test1-just a test3\r\n",&test}
                 #endif
                 };
 
-    // if (NULL == ptCFG->ptCmd) {
-    //     this.chCmdUserNumber = 0;
-    //     this.ptCmd[1] = NULL;
-    // } else {
-    //     this.chCmdUserNumber = ptCFG->chCmdNumber;
-    //     this.ptCmd[1] = ptCFG->ptCmd;
-    // }
-    this.ptCmd[1]=0x20000188;
+    if (NULL == ptCFG->ptCmd) {
+        this.chCmdUserNumber = 0;
+        this.ptCmd[1] = NULL;
+    } else {
+        this.chCmdUserNumber = ptCFG->chCmdNumber;
+        this.ptCmd[1] = ptCFG->ptCmd;
+    }
     this.chState = START;
     this.chCmdDefaultNumber = UBOUND(CONSOLE_DEFAULT_CMD);
-    this.ptCmd[0] = CONSOLE_DEFAULT_CMD;
     this.ptCmd[0] = CONSOLE_DEFAULT_CMD;
     return true;
 }
@@ -788,6 +795,6 @@ fsm_rt_t print_help_info(cmd_t *ptCmd)
 
 fsm_rt_t test(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber)
 {
-    printf("test\r\n");
+    printf("Current cmd is %s\r\n",ptCmd->pchCmd);
     return fsm_rt_cpl;
 }
