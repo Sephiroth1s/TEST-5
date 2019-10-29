@@ -456,14 +456,14 @@ bool console_cmd_init(command_line_parsing_t* ptThis, command_line_parsing_cfg_t
     s_tClearScreen.chState = START;
     s_tClearScreen.pTarget = ptCFG->pTarget;
     static cmd_test_t s_tCmdTest1;
-    s_tClearScreen.chState = START;
-    s_tClearScreen.pTarget = ptCFG->pTarget;
+    s_tCmdTest1.chState = START;
+    s_tCmdTest1.pTarget = ptCFG->pTarget;
     static cmd_test_t s_tCmdTest2;
-    s_tClearScreen.chState = START;
-    s_tClearScreen.pTarget = ptCFG->pTarget;
+    s_tCmdTest2.chState = START;
+    s_tCmdTest2.pTarget = ptCFG->pTarget;
     static cmd_test_t s_tCmdTest3;
-    s_tClearScreen.chState = START;
-    s_tClearScreen.pTarget = ptCFG->pTarget;
+    s_tCmdTest3.chState = START;
+    s_tCmdTest3.pTarget = ptCFG->pTarget;
     static cmd_t s_tDefaultCmd[]={
                 {&s_tPrintAllHelpInfo,"help","    help-Get command list of all available commands\r\n",&print_all_help_info},
                 {&s_tClearScreen,"clear","    Clear-clear the screen\r\n",&clear_screen},
@@ -591,7 +591,7 @@ fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pchBuffer
             }
             // break;
         case CHECK_CMD_USER:
-            if (strcmp(this.pchCurrentTokens, this.ptCmd[1][this.chCurrentUserCounter].pchCmd)) {
+            if (strcmp(this.pchCurrentTokens, this.ptCmd[1][this.chCurrentUserCounter].pchCmd) == 0) {
                 this.ptCurrentTempCmd = &this.ptCmd[1][this.chCurrentUserCounter];
                 this.chState = CHECK_TOKEN_IS_EMPTY;
             } else {

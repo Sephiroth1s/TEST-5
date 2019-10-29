@@ -66,7 +66,9 @@ int main(void)
         START 
     };
     static function_key_evt_handler_t s_tSpecialKey = {START, &s_tRepeatByteEvent, &s_tRepeatLineEvent};
-    const command_line_parsing_cfg_t c_tCmdParsingCFG={0,NULL,&s_tFIFOout};
+    static cmd_test_t s_tCmdTest4={START,&s_tFIFOout};
+    static cmd_t s_tUserCmd[]={&s_tCmdTest4,"test4","    test1-just a test1\r\n",&test};
+    const command_line_parsing_cfg_t c_tCmdParsingCFG={UBOUND(s_tUserCmd),s_tUserCmd,&s_tFIFOout};
     static command_line_parsing_t s_tCmdParsing;
     console_cmd_init(&s_tCmdParsing,&c_tCmdParsingCFG);
     const static token_parsing_evt_handler_t c_tTokenParsingHandler = {&command_line_parsing, &s_tCmdParsing};

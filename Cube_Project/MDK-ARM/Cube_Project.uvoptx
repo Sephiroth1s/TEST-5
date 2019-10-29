@@ -169,64 +169,64 @@
           <Type>0</Type>
           <LineNumber>137</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134229324</Address>
+          <Address>134231182</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\Sephiroth\Desktop\鍏徃浠ｇ爜1.8A\TEST-5\Cube_Project\Src\main.c</Filename>
+          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\Src\main.c</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\Cube_Project\../Src/main.c\137</Expression>
         </Bp>
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
-          <LineNumber>478</LineNumber>
+          <LineNumber>489</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134226042</Address>
+          <Address>134228000</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\Sephiroth\Desktop\鍏徃浠ｇ爜1.8A\TEST-5\Cube_Project\User_App\console\console.c</Filename>
+          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\User_App\console\console.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Cube_Project\../User_App/console/console.c\478</Expression>
+          <Expression>\\Cube_Project\../User_App/console/console.c\489</Expression>
         </Bp>
         <Bp>
           <Number>2</Number>
           <Type>0</Type>
-          <LineNumber>650</LineNumber>
+          <LineNumber>483</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134229768</Address>
+          <Address>134227954</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\Sephiroth\Desktop\鍏徃浠ｇ爜1.8A\TEST-5\Cube_Project\User_App\console\console.c</Filename>
+          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\User_App\console\console.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Cube_Project\../User_App/console/console.c\650</Expression>
+          <Expression>\\Cube_Project\../User_App/console/console.c\483</Expression>
         </Bp>
         <Bp>
           <Number>3</Number>
           <Type>0</Type>
-          <LineNumber>659</LineNumber>
+          <LineNumber>487</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134229820</Address>
+          <Address>134227988</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\Sephiroth\Desktop\鍏徃浠ｇ爜1.8A\TEST-5\Cube_Project\User_App\console\console.c</Filename>
+          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\User_App\console\console.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Cube_Project\../User_App/console/console.c\659</Expression>
+          <Expression>\\Cube_Project\../User_App/console/console.c\487</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -335,7 +335,22 @@
         <Ww>
           <count>1</count>
           <WinNumber>2</WinNumber>
-          <ItemText>ptCmd+3</ItemText>
+          <ItemText>ptCmd+5</ItemText>
+        </Ww>
+        <Ww>
+          <count>2</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>ptThis-&gt;chDefaultCounter</ItemText>
+        </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>ptThis</ItemText>
+        </Ww>
+        <Ww>
+          <count>4</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>*pptTarget</ItemText>
         </Ww>
       </WatchWindow2>
       <MemoryWindow1>
@@ -352,7 +367,7 @@
       <DebugFlag>
         <trace>0</trace>
         <periodic>1</periodic>
-        <aLwin>0</aLwin>
+        <aLwin>1</aLwin>
         <aCover>0</aCover>
         <aSer1>0</aSer1>
         <aSer2>0</aSer2>
