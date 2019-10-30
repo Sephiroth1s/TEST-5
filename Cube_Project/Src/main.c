@@ -62,13 +62,15 @@ static void system_init(void)
 /*================================= MAIN =====================================*/
 int main(void)
 {
-    enum { 
-        START 
-    };
+    enum { START };
     static function_key_evt_handler_t s_tSpecialKey = {START, &s_tRepeatByteEvent, &s_tRepeatLineEvent};
-    static print_token_t s_tPrintToken = {START, &s_tFIFOout};
-    const static print_token_evt_handler_t c_tPrintTokenHandler = {&print_token, &s_tPrintToken};
-    static console_token_t s_tConsoleToken = {START, &s_tFIFOout, &c_tPrintTokenHandler};
+    static cmd_test_t s_tCmdTest4 = {START, &s_tFIFOout};
+    static cmd_t s_tUserCmd[] = {&s_tCmdTest4, "test4", "    test4-just a test4\r\n", &test};
+    const command_line_parsing_cfg_t c_tCmdParsingCFG = {UBOUND(s_tUserCmd), s_tUserCmd, &s_tFIFOout};
+    static command_line_parsing_t s_tCmdParsing;
+    console_cmd_init(&s_tCmdParsing, &c_tCmdParsingCFG);
+    const static token_parsing_evt_handler_t c_tTokenParsingHandler = {&command_line_parsing, &s_tCmdParsing};
+    static console_token_t s_tConsoleToken = {START, &s_tFIFOout, &c_tTokenParsingHandler};
     static uint8_t s_chBuffer[CONSOLE_BUFFER_SIZE + 1] = {'\0'};
     static uint8_t s_chLastBuffer[UBOUND(s_chBuffer)] = {'\0'};
     const static read_byte_evt_handler_t c_tReadByteEvent = {&dequeue_byte, &s_tFIFOConsolein};

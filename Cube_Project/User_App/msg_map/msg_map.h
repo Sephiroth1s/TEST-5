@@ -31,7 +31,7 @@ declare_class(check_msg_map_t)
 
 def_class(check_msg_map_t,
     private_member(
-       uint8_t chState;
+        uint8_t chState;
         uint8_t chMSGNumber;
         uint8_t chVoteDropCount;
         uint8_t chMSGCount;
