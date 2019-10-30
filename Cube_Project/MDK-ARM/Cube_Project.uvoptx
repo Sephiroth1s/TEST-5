@@ -167,25 +167,25 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>137</LineNumber>
+          <LineNumber>559</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134231182</Address>
+          <Address>134227536</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\Src\main.c</Filename>
+          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\User_App\console\console.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Cube_Project\../Src/main.c\137</Expression>
+          <Expression>\\Cube_Project\../User_App/console/console.c\559</Expression>
         </Bp>
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
-          <LineNumber>489</LineNumber>
+          <LineNumber>548</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134228000</Address>
+          <Address>134227444</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -194,14 +194,14 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\User_App\console\console.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Cube_Project\../User_App/console/console.c\489</Expression>
+          <Expression>\\Cube_Project\../User_App/console/console.c\548</Expression>
         </Bp>
         <Bp>
           <Number>2</Number>
           <Type>0</Type>
-          <LineNumber>483</LineNumber>
+          <LineNumber>583</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>134227954</Address>
+          <Address>134227686</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -210,23 +210,7 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\User_App\console\console.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Cube_Project\../User_App/console/console.c\483</Expression>
-        </Bp>
-        <Bp>
-          <Number>3</Number>
-          <Type>0</Type>
-          <LineNumber>487</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134227988</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>C:\Users\test\Desktop\鍏徃\training_template\Cube_Project\User_App\console\console.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\Cube_Project\../User_App/console/console.c\487</Expression>
+          <Expression>\\Cube_Project\../User_App/console/console.c\583</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -351,6 +335,31 @@
           <count>4</count>
           <WinNumber>2</WinNumber>
           <ItemText>*pptTarget</ItemText>
+        </Ww>
+        <Ww>
+          <count>5</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>ptThis-&gt;chCmdDefaultNumber</ItemText>
+        </Ww>
+        <Ww>
+          <count>6</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>ptThis-&gt;chDefaultCounter</ItemText>
+        </Ww>
+        <Ww>
+          <count>7</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>ptThis-&gt;pchCurrentTokens</ItemText>
+        </Ww>
+        <Ww>
+          <count>8</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>ptThis-&gt;ptCurrentTempCmd-&gt;pchHelpInfo</ItemText>
+        </Ww>
+        <Ww>
+          <count>9</count>
+          <WinNumber>2</WinNumber>
+          <ItemText>ptThis-&gt;ptPrintStr</ItemText>
         </Ww>
       </WatchWindow2>
       <MemoryWindow1>

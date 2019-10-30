@@ -6,7 +6,7 @@
 #include "../event/event.h"
 
 typedef struct cmd_t cmd_t;
-typedef fsm_rt_t cmd_handler_t(cmd_t *, uint8_t, uint8_t);
+typedef fsm_rt_t cmd_handler_t(void *, uint8_t *, uint16_t);
 struct cmd_t {
     void *pTarget;
     uint8_t *pchCmd;
@@ -21,21 +21,16 @@ struct cmd_test_t {
     print_str_t *ptPrintStr;
 };
 
-
-typedef struct print_help_info_t print_help_info_t;         // 输出帮助信息控制块
-struct print_help_info_t {
-    uint8_t chState;
-    void *pTarget;
-    print_str_t *ptPrintStr;
-};
-
 typedef struct pring_all_help_info_t pring_all_help_info_t;  //  help 命令
 struct pring_all_help_info_t {
     uint8_t chState;
     void *pTarget;
     uint8_t chDefaultCounter;
     uint8_t chUserCounter;
-    cmd_t *pptThis[2];
+    uint8_t chCmdDefaultNumber;
+    uint8_t chCmdUserNumber;
+    cmd_t *ptUserCmd;
+    cmd_t *ptDefaultCmd;
     print_str_t *ptPrintStr;
 };
 
@@ -44,6 +39,8 @@ struct clear_screen_t {
     uint8_t chState;
     void *pTarget;
     print_str_t *ptPrintStr;
+    uint16_t hwTokensCounter;
+    uint8_t *pchCurrentTokens;
 };
 
 typedef struct command_line_parsing_t command_line_parsing_t;      // 分析token数组 处理命令
@@ -51,18 +48,21 @@ struct command_line_parsing_t{
     uint8_t chState;
     uint8_t chCmdUserNumber;
     uint8_t chCurrentUserCounter;
-    cmd_t *ptCmd[2];
+    cmd_t *ptUserCmd;
+    cmd_t *ptDefaultCmd;
     uint8_t chCmdDefaultNumber;
     uint8_t chCurrentDefaultCmdCounter;
-    cmd_t *ptCurrentTempCmd;
     uint16_t hwTokensCounter;
     uint8_t *pchCurrentTokens;
+    cmd_t *ptCurrentTempCmd;
+    void *pTarget;
+    print_str_t *ptPrintStr;
 };
 
 typedef struct command_line_parsing_cfg_t command_line_parsing_cfg_t;  // 分析token 数组，注册命令配置宏
 struct command_line_parsing_cfg_t{
     uint8_t chCmdNumber;
-    cmd_t *ptCmd;
+    cmd_t *ptUserCmd;
     void *pTarget;
 };
 
@@ -143,11 +143,11 @@ static uint8_t *find_token(uint8_t *pchBuffer, uint16_t *hwTokens);
 extern fsm_rt_t console_token(console_token_t *ptThis, uint8_t *pchBuffer);
 
 extern bool console_cmd_init(command_line_parsing_t* ptThis, command_line_parsing_cfg_t *ptCFG);
-extern fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens);
-static fsm_rt_t print_all_help_info(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber);
-static fsm_rt_t clear_screen(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber);
-static fsm_rt_t print_help_info(cmd_t *ptCmd);
-extern fsm_rt_t test(cmd_t *ptCmd, uint8_t chCmdDefaultNumber, uint8_t chCmdUserNumber);
+extern fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens); // 第一个token分析
+
+static fsm_rt_t print_all_help_info(pring_all_help_info_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens);
+static fsm_rt_t clear_screen(clear_screen_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens);
+extern fsm_rt_t test(cmd_test_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens);
 
 
 #endif
