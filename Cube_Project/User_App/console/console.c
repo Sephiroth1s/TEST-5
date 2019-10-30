@@ -37,8 +37,8 @@ static cmd_t s_tDefaultCmd[]={
                 {&s_tClearScreen,"clear","    clear-Clear the screen\r\n",&clear_screen},
                 #ifdef SUPPORT_CONSOLE_DEFAULT_CMD_EX_EN
                 {&s_tCmdTest1,"test1","    test1-just a test1\r\n",&test},
-                {&s_tCmdTest2,"test2","    test1-just a test2\r\n",&test},
-                {&s_tCmdTest3,"test3","    test1-just a test3\r\n",&test}
+                {&s_tCmdTest2,"test2","    test2-just a test2\r\n",&test},
+                {&s_tCmdTest3,"test3","    test3-just a test3\r\n",&test}
                 #endif
                 };
 

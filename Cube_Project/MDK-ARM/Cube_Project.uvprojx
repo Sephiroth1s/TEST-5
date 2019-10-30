@@ -313,7 +313,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>0</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -332,11 +332,11 @@
             <v6LangP>3</v6LangP>
             <vShortEn>0</vShortEn>
             <vShortWch>0</vShortWch>
-            <v6Lto>0</v6Lto>
+            <v6Lto>1</v6Lto>
             <v6WtE>0</v6WtE>
             <v6Rtti>0</v6Rtti>
             <VariousControls>
-              <MiscControls> -fms-extensions -Wno-empty-body -Wno-microsoft-anon-tag -Wno-nonportable-include-path -Wno-tautological-constant-out-of-range-compare</MiscControls>
+              <MiscControls> -Omax -fms-extensions -Wno-empty-body -Wno-microsoft-anon-tag -Wno-nonportable-include-path -Wno-tautological-constant-out-of-range-compare</MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xB,_MSC_VER,VSF_UTILITIES_REQ___CMSIS_HEADER_FILE__FROM_USR=\"stm32f1xx_hal.h\"</Define>
               <Undefine></Undefine>
               <IncludePath>../Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;..\..\Vsf\release\kernel\beta\vsf;..\..\Vsf\release\kernel\beta\example\usrapp\template\app_cfg;..\User_App\check_string;..\User_App\check_use_peek;..\User_App\critical_sector;..\User_App\event;..\User_App\key;..\User_App\led;..\User_App\mailbox;..\User_App\print_string;..\User_App\queue;..\User_App\msg_map;..\..\Vsf\release\kernel\beta\vsf\utilities\3rd-party\PLOOC</IncludePath>
