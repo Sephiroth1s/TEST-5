@@ -2,6 +2,8 @@
 #include "./console.h"
 #include "../print_string/print_string.h"
 #include "../check_string/check_string.h"
+#include "../check_use_peek/check_use_peek.h"
+#include "../msg_map/msg_map.h"
 #include "../event/event.h"
 #include <string.h>
 
@@ -27,6 +29,14 @@
 #endif
 
 POOL(print_str) s_tPrintFreeList;
+
+#define CONSOLE_INPUT_SIZE 50
+static check_use_peek_t s_tCheckWordsUsePeek;
+static uint8_t s_chByteConsoleFrontendin[CONSOLE_INPUT_SIZE];
+static event_t s_tRepeatLineEvent,s_tRepeatByteEvent;
+static byte_queue_t s_tFIFOConsoleFrontendin;
+
+                        
 static pring_all_help_info_t s_tPrintAllHelpInfo;
 static clear_screen_t s_tClearScreen;
 static cmd_test_t s_tCmdTest1;
@@ -51,25 +61,64 @@ bool console_frontend_init(console_frontend_t *ptThis,console_frontend_cfg_t *pt
             || (NULL == ptCFG) 
             || (NULL == ptCFG->pchCurrentBuffer) 
             || (NULL == ptCFG->pOutputTarget)
-            || (NULL == ptCFG->ptReadByteEvent) 
-            || (NULL == ptCFG->ptReadByteEvent->fnReadByte)
             || (NULL == ptCFG->ptConsoleToken)
             || (NULL == ptCFG->ptConsoleToken->fnConsoleToken)) {
         return false;
     }
 
+    INIT_EVENT(&s_tRepeatByteEvent,false,false);
+    INIT_EVENT(&s_tRepeatLineEvent,false,false);
+    INIT_BYTE_QUEUE(&s_tFIFOConsoleFrontendin, s_chByteConsoleFrontendin, sizeof(s_chByteConsoleFrontendin));
+    static read_byte_evt_handler_t s_tReadByteEvent;
+    s_tReadByteEvent.fnReadByte = &dequeue_byte;
+    s_tReadByteEvent.pTarget = &s_tFIFOConsoleFrontendin;
+    const static msg_t c_tMSGMap[] = {
+                        {"\x1b\x4f\x50", &s_tRepeatByteEvent, &repeat_msg_handler},
+                        {"\x1b\x4f\x51", NULL, NULL},
+                        {"\x1b\x4f\x52", &s_tRepeatLineEvent, &repeat_msg_handler},
+                        {"\x1b\x4f\x53", NULL, NULL},
+                        {"\x1b\x4f\x54", NULL, NULL},
+                        {"\x1b\x4f\x55", NULL, NULL},
+                        {"\x1b\x4f\x56", NULL, NULL},
+                        {"\x1b\x4f\x57", NULL, NULL},
+                        {"\x1b\x4f\x58", NULL, NULL},
+                        {"\x1b\x4f\x59", NULL, NULL},
+                        {"\x1b\x4f\x5a", NULL, NULL},
+                        {"\x1b\x4f\x5b", NULL, NULL},
+                        {"\x1b\x4f\x5c", NULL, NULL},
+                        {"\x1b\x5b\x41", NULL, NULL},
+                        {"\x1b\x5b\x42", NULL, NULL},
+                        {"\x1b\x5b\x43", NULL, NULL},
+                        {"\x1b\x5b\x44", NULL, NULL},
+                        {"\x1b\x5B\x31\x7E", NULL, NULL},
+                        {"\x1b\x5B\x32\x7E", NULL, NULL},
+                        {"\x1b\x5B\x33\x7E", NULL, NULL},
+                        {"\x1b\x5B\x34\x7E", NULL, NULL},
+                        {"\x1b\x5B\x35\x7E", NULL, NULL},
+                        {"\x1b\x5B\x36\x7E", NULL, NULL}};
+    static function_key_evt_handler_t s_tSpecialKey = {START, &s_tRepeatByteEvent, &s_tRepeatLineEvent};
+    static uint8_t s_chLastBuffer[CONSOLE_BUFFER_SIZE+1] = {'\0'}; 
+    static check_msg_map_cfg_t s_tCheckMSGMapCFG;
+    s_tCheckMSGMapCFG.chMSGNumber = UBOUND(c_tMSGMap);
+    s_tCheckMSGMapCFG.ptQueue = ptCFG->ptConsoleinTarget;
+    s_tCheckMSGMapCFG.ptMSGMap = c_tMSGMap;
+    static check_msg_map_t s_tCheckMSGMap;
+    const static check_agent_t c_tCheckWordsAgent[] = {{&s_tCheckMSGMap, &check_msg_map}};
+    static check_use_peek_cfg_t s_tCheckWordsUsePeekCFG;
+    s_tCheckWordsUsePeekCFG.chAgentsNumber = UBOUND(c_tCheckWordsAgent);
+    s_tCheckWordsUsePeekCFG.ptQueue = ptCFG->ptConsoleinTarget;
+    s_tCheckWordsUsePeekCFG.ptAgents = (check_agent_t *)c_tCheckWordsAgent;
+    s_tCheckWordsUsePeekCFG.fnOnDropByte = &console_frontend_input;
+
+    CHECK_MSG_MAP.Init(&s_tCheckMSGMap, &s_tCheckMSGMapCFG);
+    CHECK_USE_PEEK.Init(&s_tCheckWordsUsePeek, &s_tCheckWordsUsePeekCFG);
 #if VSF_USE_FUNCTION_KEY
-    if(        (NULL == ptCFG->ptFunctionKey)
-            || (NULL == ptCFG->ptFunctionKey->ptRepeatByte)
-            || (NULL == ptCFG->ptFunctionKey->ptRepeatLine)){
-        return false;
-    }
-    this.pchLastBuffer = ptCFG->pchLastBuffer;
+    this.pchLastBuffer = s_chLastBuffer;
     this.chLastMaxNumber = 0;
-    this.ptFunctionKey = ptCFG->ptFunctionKey;
+    this.ptFunctionKey = &s_tSpecialKey;
     this.ptFunctionKey->chLastCounter = 0;
     this.ptFunctionKey->pOutputTarget = ptCFG->pOutputTarget;
-    this.ptFunctionKey->pchLastBuffer = ptCFG->pchLastBuffer;
+    this.ptFunctionKey->pchLastBuffer = s_chLastBuffer;
     this.ptFunctionKey->pchCurrentBuffer = ptCFG->pchCurrentBuffer;
     this.ptFunctionKey->fnFunctionKey = &function_key;
 #endif
@@ -77,7 +126,7 @@ bool console_frontend_init(console_frontend_t *ptThis,console_frontend_cfg_t *pt
     this.chState = START;
     this.chMaxNumber = ptCFG->chMaxNumber-1;
     this.pchCurrentBuffer = ptCFG->pchCurrentBuffer;
-    this.ptReadByteEvent = ptCFG->ptReadByteEvent;
+    this.ptReadByteEvent = &s_tReadByteEvent;
     this.pOutputTarget = ptCFG->pOutputTarget;
     this.ptConsoleToken = ptCFG->ptConsoleToken;
     return true;
@@ -89,6 +138,7 @@ fsm_rt_t console_frontend(console_frontend_t *ptThis)
         START,
         PRINT_START_FLAG,
         #if VSF_USE_FUNCTION_KEY
+        CHECK_FUNCTION_KEY_USE_PEEK,
         VSF_USE_FUNCTION_KEY_F1_F3,
         #endif
         READ_BYTE,
@@ -110,6 +160,7 @@ fsm_rt_t console_frontend(console_frontend_t *ptThis)
     if ((NULL == this.ptReadByteEvent) || (NULL == this.pchCurrentBuffer)) {
         return fsm_rt_err;
     }
+    
     switch (this.chState) {
         case START:
             this.chCurrentCounter = 0;
@@ -122,7 +173,7 @@ fsm_rt_t console_frontend(console_frontend_t *ptThis)
                 this.chCurrentCounter = 0;
                 *this.pchCurrentBuffer = '\0';
                 #if VSF_USE_FUNCTION_KEY
-                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
+                this.chState = CHECK_FUNCTION_KEY_USE_PEEK;
                 #else
                 this.chState = READ_BYTE;
                 goto READ_BYTE_START;
@@ -132,6 +183,14 @@ fsm_rt_t console_frontend(console_frontend_t *ptThis)
                 break;
             }
         #if VSF_USE_FUNCTION_KEY
+        case CHECK_FUNCTION_KEY_USE_PEEK:
+            if(fsm_rt_cpl == CHECK_USE_PEEK.CheckUsePeek(&s_tCheckWordsUsePeek)) {
+                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
+            }else{
+                this.chState = READ_BYTE;
+                // goto READ_BYTE_START;
+            }
+            break;
         case VSF_USE_FUNCTION_KEY_F1_F3:
             if (fsm_rt_cpl == this.ptFunctionKey->fnFunctionKey(
                                   this.ptFunctionKey, 
@@ -151,7 +210,7 @@ fsm_rt_t console_frontend(console_frontend_t *ptThis)
                 // break;
             } else {
                 #if VSF_USE_FUNCTION_KEY
-                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
+                this.chState = CHECK_FUNCTION_KEY_USE_PEEK;
                 #else
                 this.chState = READ_BYTE;
                 #endif
@@ -175,7 +234,7 @@ fsm_rt_t console_frontend(console_frontend_t *ptThis)
                 // break;
             } else {
                 #if VSF_USE_FUNCTION_KEY
-                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
+                this.chState = CHECK_FUNCTION_KEY_USE_PEEK;
                 #else
                 this.chState = READ_BYTE;
                 #endif
@@ -185,7 +244,7 @@ fsm_rt_t console_frontend(console_frontend_t *ptThis)
         GOTO_APPEND_BYTE:
             if (print_str_output_byte(this.pOutputTarget, this.chByte)) {
                 #if VSF_USE_FUNCTION_KEY
-                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
+                this.chState = CHECK_FUNCTION_KEY_USE_PEEK;
                 #else
                 this.chState = READ_BYTE;
                 #endif
@@ -198,7 +257,7 @@ fsm_rt_t console_frontend(console_frontend_t *ptThis)
                 // break;
             } else {
                 #if VSF_USE_FUNCTION_KEY
-                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
+                this.chState = CHECK_FUNCTION_KEY_USE_PEEK;
                 #else
                 this.chState = READ_BYTE;
                 #endif
@@ -213,7 +272,7 @@ fsm_rt_t console_frontend(console_frontend_t *ptThis)
                 goto GOTO_APPEND_BYTE;
             } else {
                 #if VSF_USE_FUNCTION_KEY
-                this.chState = VSF_USE_FUNCTION_KEY_F1_F3;
+                this.chState = CHECK_FUNCTION_KEY_USE_PEEK;
                 #else
                 this.chState = READ_BYTE;
                 #endif
@@ -782,4 +841,21 @@ fsm_rt_t test(cmd_test_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens)
 {
     printf("    Current cmd is %s\r\n",pchBuffer);
     return fsm_rt_cpl;
+}
+
+void repeat_msg_handler(msg_t *ptMsg)
+{
+    if (ptMsg != NULL) {
+        if (ptMsg->pTarget != NULL) {
+            SET_EVENT(ptMsg->pTarget);
+        }
+    }
+}
+
+bool console_frontend_input(uint8_t chByte)
+{
+    if (ENQUEUE_BYTE(&s_tFIFOConsoleFrontendin, chByte)) {
+        return true;
+    }
+    return false;
 }

@@ -3,6 +3,7 @@
 #define __CONSOLE_H__
 #include "../print_string/print_string.h"
 #include "../check_string/check_string.h"
+#include "../msg_map/msg_map.h"
 #include "../event/event.h"
 
 typedef struct cmd_t cmd_t;
@@ -123,15 +124,11 @@ typedef struct {
 } console_frontend_t;
 
 typedef struct {
-    read_byte_evt_handler_t *ptReadByteEvent;
+    void *ptConsoleinTarget;
     console_token_evt_handler_t *ptConsoleToken;
     uint8_t chMaxNumber;
     uint8_t *pchCurrentBuffer;
     void *pOutputTarget;
-#if VSF_USE_FUNCTION_KEY
-    uint8_t *pchLastBuffer;
-    function_key_evt_handler_t *ptFunctionKey;
-#endif
 } console_frontend_cfg_t;
 
 extern bool console_frontend_init(console_frontend_t *ptThis, console_frontend_cfg_t *ptCFG);
@@ -149,5 +146,6 @@ static fsm_rt_t print_all_help_info(pring_all_help_info_t *ptThis, uint8_t *pchB
 static fsm_rt_t clear_screen(clear_screen_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens);
 extern fsm_rt_t test(cmd_test_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens);
 
-
+static void repeat_msg_handler(msg_t *ptMsg);
+static bool console_frontend_input(uint8_t chByte);
 #endif

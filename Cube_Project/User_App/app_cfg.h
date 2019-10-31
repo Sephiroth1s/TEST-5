@@ -4,6 +4,7 @@
 #include "vsf.h"
 
 #define VSF_USE_FUNCTION_KEY ENABLED
+#define CONSOLE_BUFFER_SIZE 50
 
 #define SUPPORT_CONSOLE_DEFAULT_CMD_EX_EN
 
