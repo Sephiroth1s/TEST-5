@@ -147,7 +147,7 @@ extern fsm_rt_t test(cmd_test_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens);
 
 static void repeat_msg_handler(msg_t *ptMsg);
 static bool console_frontend_input(uint8_t chByte);
-extern bool console_task_init(byte_queue_t *pTarget);
+extern bool console_task_init(void *pTarget);
 extern void console_task(console_frontend_t *ptThis);
 
 #endif

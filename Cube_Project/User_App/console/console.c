@@ -55,7 +55,7 @@ static cmd_t s_tDefaultCmd[]={
                 #endif
                 };
 
-bool console_task_init(byte_queue_t *pTarget)
+bool console_task_init(void *pTarget)
 {
     enum {
         START
