@@ -29,17 +29,17 @@
 #endif
 
 POOL(print_str) s_tPrintFreeList;
-
-#define CONSOLE_INPUT_SIZE 50
+#define CONSOLE_BUFFER_SIZE 50
+#define CONSOLE_INPUT_SIZE 10
 static check_use_peek_t s_tCheckWordsUsePeek;
 static uint8_t s_chByteConsoleFrontendin[CONSOLE_INPUT_SIZE];
+static byte_queue_t s_tFIFOConsoleFrontendin;
+#if VSF_USE_FUNCTION_KEY
 static uint8_t s_chLastBuffer[CONSOLE_BUFFER_SIZE+1] = {'\0'}; 
 static event_t s_tRepeatLineEvent,s_tRepeatByteEvent;
-static byte_queue_t s_tFIFOConsoleFrontendin;
 static read_byte_evt_handler_t s_tReadByteEvent;
-
 static function_key_evt_handler_t s_tFunctionKey;
-
+#endif
 static pring_all_help_info_t s_tPrintAllHelpInfo;
 static clear_screen_t s_tClearScreen;
 static cmd_test_t s_tCmdTest1;
@@ -62,7 +62,7 @@ bool console_task_init(byte_queue_t *pTarget)
     };
     INIT_BYTE_QUEUE(&s_tFIFOConsoleFrontendin, s_chByteConsoleFrontendin, sizeof(s_chByteConsoleFrontendin));
     s_tReadByteEvent.fnReadByte = &dequeue_byte;
-    s_tReadByteEvent.pTarget = &s_tFIFOConsoleFrontendin;
+    s_tReadByteEvent.pTarget = &pTarget;
     const static msg_t c_tMSGMap[] = {
                         #if VSF_USE_FUNCTION_KEY
                         {"\x1b\x4f\x50", &s_tRepeatByteEvent, &repeat_msg_handler},
@@ -111,8 +111,9 @@ bool console_task_init(byte_queue_t *pTarget)
 
 void console_task(console_frontend_t *ptThis)
 {
-    // CHECK_USE_PEEK.CheckUsePeek(&s_tCheckWordsUsePeek);
+    CHECK_USE_PEEK.CheckUsePeek(&s_tCheckWordsUsePeek);
     console_frontend(ptThis);
+    
 }
 
 bool console_frontend_init(console_frontend_t *ptThis,console_frontend_cfg_t *ptCFG)
@@ -144,11 +145,13 @@ bool console_frontend_init(console_frontend_t *ptThis,console_frontend_cfg_t *pt
     this.ptFunctionKey->pchCurrentBuffer = ptCFG->pchCurrentBuffer;
     this.ptFunctionKey->fnFunctionKey = &function_key;
 #endif
-
+    static read_byte_evt_handler_t s_tReadByteFrontend;
+    s_tReadByteFrontend.fnReadByte = &dequeue_byte;
+    s_tReadByteFrontend.pTarget = &s_tFIFOConsoleFrontendin;
     this.chState = START;
     this.chMaxNumber = ptCFG->chMaxNumber-1;
     this.pchCurrentBuffer = ptCFG->pchCurrentBuffer;
-    this.ptReadByteEvent = &s_tReadByteEvent;
+    this.ptReadByteEvent = &s_tReadByteFrontend;
     this.pOutputTarget = ptCFG->pOutputTarget;
     this.ptConsoleToken = ptCFG->ptConsoleToken;
     return true;

@@ -124,7 +124,6 @@ typedef struct {
 } console_frontend_t;
 
 typedef struct {
-    void *ptConsoleinTarget;
     console_token_evt_handler_t *ptConsoleToken;
     uint8_t chMaxNumber;
     uint8_t *pchCurrentBuffer;

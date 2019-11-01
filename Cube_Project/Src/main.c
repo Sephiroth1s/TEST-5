@@ -19,8 +19,8 @@
 #define ENTER "\x0A\x0D"
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
-#define CONSOLE_INPUT_SIZE 50
-
+#define CONSOLE_INPUT_SIZE 10
+#define CONSOLE_BUFFER_SIZE 50
 
 extern POOL(print_str) s_tPrintFreeList;
 
@@ -65,7 +65,6 @@ int main(void)
 
     const static console_token_evt_handler_t c_tProcessingString = {&console_token, &s_tConsoleToken};
     const static console_frontend_cfg_t c_tConsoleCFG = {
-                                        &s_tFIFOConsolein,
                                         &c_tProcessingString,
                                         UBOUND(s_chBuffer),
                                         s_chBuffer,
