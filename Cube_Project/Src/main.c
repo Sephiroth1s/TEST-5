@@ -24,14 +24,10 @@
 
 extern POOL(print_str) s_tPrintFreeList;
 
-static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE], s_chByteConsole[CONSOLE_INPUT_SIZE];
-static byte_queue_t s_tFIFOin, s_tFIFOout, s_tFIFOConsolein;
-
+static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE];
+static byte_queue_t s_tFIFOin, s_tFIFOout;
 
 static uint8_t s_chPrintStrPool[256] ALIGN(__alignof__(print_str_t));
-
-static fsm_rt_t console_byte_transfer(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop);
-static bool console_input(uint8_t chByte);
 
 extern bool serial_out(uint8_t chByte);
 extern bool serial_in(uint8_t *pchByte);
@@ -70,50 +66,21 @@ int main(void)
                                         s_chBuffer,
                                         &s_tFIFOout};
     static console_frontend_t s_tConsole;
-
-    const static check_agent_t c_tCheckWordsAgent[] = {{&s_tFIFOin, &console_byte_transfer}};
-
-
-    const static check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
-                                        UBOUND(c_tCheckWordsAgent),
-                                        &s_tFIFOin,
-                                        (check_agent_t *)c_tCheckWordsAgent,
-                                        &console_input};
-    static check_use_peek_t s_tCheckWordsUsePeek;
     system_init();
     led_init();
-    console_task_init(&s_tFIFOConsolein);
+    console_task_init(&s_tFIFOin);
     console_frontend_init(&s_tConsole, &c_tConsoleCFG);
     POOL_INIT(print_str, &s_tPrintFreeList);
     POOL_ADD_HEAP(print_str, &s_tPrintFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
-    INIT_BYTE_QUEUE(&s_tFIFOConsolein, s_chByteConsole, sizeof(s_chByteConsole));
-    CHECK_USE_PEEK.Init(&s_tCheckWordsUsePeek, &c_tCheckWordsUsePeekCFG);
     LED1_OFF();
     while (1) {
         breath_led();
         console_task(&s_tConsole);
-        CHECK_USE_PEEK.CheckUsePeek(&s_tCheckWordsUsePeek);
         serial_in_task();
         serial_out_task();
     }
-}
-
-fsm_rt_t console_byte_transfer(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop)
-{
-    uint8_t chByte;
-    PEEK_BYTE_QUEUE(pTarget,&chByte);
-    *pbRequestDrop = true;
-    return fsm_rt_on_going;
-}
-
-bool console_input(uint8_t chByte)
-{
-    if (ENQUEUE_BYTE(&s_tFIFOConsolein, chByte)) {
-        return true;
-    }
-    return false;
 }
 
 fsm_rt_t serial_in_task(void)
