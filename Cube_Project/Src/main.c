@@ -71,7 +71,7 @@ int main(void)
                                         &s_tFIFOout};
     static console_frontend_t s_tConsole;
 
-    const static check_agent_t c_tCheckWordsAgent[] = {{&s_tFIFOConsolein, &console_byte_transfer}};
+    const static check_agent_t c_tCheckWordsAgent[] = {{&s_tFIFOin, &console_byte_transfer}};
 
 
     const static check_use_peek_cfg_t c_tCheckWordsUsePeekCFG = {
@@ -82,13 +82,13 @@ int main(void)
     static check_use_peek_t s_tCheckWordsUsePeek;
     system_init();
     led_init();
+    console_task_init(&s_tFIFOConsolein);
     console_frontend_init(&s_tConsole, &c_tConsoleCFG);
     POOL_INIT(print_str, &s_tPrintFreeList);
     POOL_ADD_HEAP(print_str, &s_tPrintFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
     INIT_BYTE_QUEUE(&s_tFIFOConsolein, s_chByteConsole, sizeof(s_chByteConsole));
-    console_task_init(&s_tFIFOConsolein);
     CHECK_USE_PEEK.Init(&s_tCheckWordsUsePeek, &c_tCheckWordsUsePeekCFG);
     LED1_OFF();
     while (1) {
@@ -102,6 +102,8 @@ int main(void)
 
 fsm_rt_t console_byte_transfer(void *pTarget, read_byte_evt_handler_t *ptReadByte, bool *pbRequestDrop)
 {
+    uint8_t chByte;
+    PEEK_BYTE_QUEUE(pTarget,&chByte);
     *pbRequestDrop = true;
     return fsm_rt_on_going;
 }

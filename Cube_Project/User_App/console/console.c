@@ -61,8 +61,10 @@ bool console_task_init(byte_queue_t *pTarget)
         START
     };
     INIT_BYTE_QUEUE(&s_tFIFOConsoleFrontendin, s_chByteConsoleFrontendin, sizeof(s_chByteConsoleFrontendin));
+    #if VSF_USE_FUNCTION_KEY
     s_tReadByteEvent.fnReadByte = &dequeue_byte;
-    s_tReadByteEvent.pTarget = &pTarget;
+    s_tReadByteEvent.pTarget = pTarget;
+    #endif
     const static msg_t c_tMSGMap[] = {
                         #if VSF_USE_FUNCTION_KEY
                         {"\x1b\x4f\x50", &s_tRepeatByteEvent, &repeat_msg_handler},
@@ -113,7 +115,6 @@ void console_task(console_frontend_t *ptThis)
 {
     CHECK_USE_PEEK.CheckUsePeek(&s_tCheckWordsUsePeek);
     console_frontend(ptThis);
-    
 }
 
 bool console_frontend_init(console_frontend_t *ptThis,console_frontend_cfg_t *ptCFG)
