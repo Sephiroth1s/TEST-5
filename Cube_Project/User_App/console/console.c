@@ -28,16 +28,36 @@
 #endif
 #endif
 
+typedef struct pring_all_help_info_t pring_all_help_info_t;  //  help 命令
+struct pring_all_help_info_t {
+    uint8_t chState;
+    void *pTarget;
+    uint8_t chDefaultCounter;
+    uint8_t chUserCounter;
+    uint8_t chCmdDefaultNumber;
+    uint8_t chCmdUserNumber;
+    cmd_t *ptUserCmd;
+    cmd_t *ptDefaultCmd;
+    print_str_t *ptPrintStr;
+};
+
+typedef struct clear_screen_t clear_screen_t;               // clear 命令
+struct clear_screen_t {
+    uint8_t chState;
+    void *pTarget;
+    print_str_t *ptPrintStr;
+    uint16_t hwTokensCounter;
+    uint8_t *pchCurrentTokens;
+};
+
 POOL(print_str) s_tPrintFreeList;
-#define CONSOLE_BUFFER_SIZE 50
-#define CONSOLE_INPUT_SIZE 10
+
 static check_use_peek_t s_tCheckWordsUsePeek;
 static uint8_t s_chByteConsoleFrontendin[CONSOLE_INPUT_SIZE];
 static byte_queue_t s_tFIFOConsoleFrontendin;
 #if VSF_USE_FUNCTION_KEY
 static uint8_t s_chLastBuffer[CONSOLE_BUFFER_SIZE+1] = {'\0'}; 
 static event_t s_tRepeatLineEvent,s_tRepeatByteEvent;
-static read_byte_evt_handler_t s_tReadByteEvent;
 static function_key_evt_handler_t s_tFunctionKey;
 #endif
 static pring_all_help_info_t s_tPrintAllHelpInfo;
@@ -45,6 +65,10 @@ static clear_screen_t s_tClearScreen;
 static cmd_test_t s_tCmdTest1;
 static cmd_test_t s_tCmdTest2;
 static cmd_test_t s_tCmdTest3;
+
+static fsm_rt_t print_all_help_info(pring_all_help_info_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens);
+static fsm_rt_t clear_screen(clear_screen_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens);
+
 static cmd_t s_tDefaultCmd[]={
                 {&s_tPrintAllHelpInfo,"help","    help-Get command list of all available commands\r\n",&print_all_help_info},
                 {&s_tClearScreen,"clear","    clear-Clear the screen\r\n",&clear_screen},
@@ -55,16 +79,35 @@ static cmd_t s_tDefaultCmd[]={
                 #endif
                 };
 
-bool console_task_init(void *pTarget)
+#if VSF_USE_FUNCTION_KEY
+static fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *pchLastMaxNumber);
+#endif
+
+static bool console_frontend_init(console_frontend_t *ptObj, console_frontend_cfg_t *ptCFG);
+static bool console_cmd_init(command_line_parsing_t* ptThis, command_line_parsing_cfg_t *ptCFG);
+static uint8_t *find_token(uint8_t *pchBuffer, uint16_t *hwTokens);
+
+static void repeat_msg_handler(msg_t *ptMsg);
+static bool console_frontend_input(uint8_t chByte);
+
+bool console_task_init(console_t *ptThis, console_cfg_t *ptCFG)
 {
     enum {
         START
     };
+    class_internal(pTarget, ptThis, console_t);
+    if ((NULL == ptCFG) || (NULL == ptThis)) {
+        return false;
+    }
+    this.ptConsoleFrontend = ptCFG->ptConsoleFrontend;
+    if (!console_cmd_init(ptCFG->ptCmdParsing, ptCFG->ptCmdParsingCFG)) {
+        return false;
+    }
+    if (!console_frontend_init(this.ptConsoleFrontend, ptCFG->ptConsoleFrontendCFG)) {
+        return false;
+    }
+
     INIT_BYTE_QUEUE(&s_tFIFOConsoleFrontendin, s_chByteConsoleFrontendin, sizeof(s_chByteConsoleFrontendin));
-    #if VSF_USE_FUNCTION_KEY
-    s_tReadByteEvent.fnReadByte = &dequeue_byte;
-    s_tReadByteEvent.pTarget = pTarget;
-    #endif
     const static msg_t c_tMSGMap[] = {
                         #if VSF_USE_FUNCTION_KEY
                         {"\x1b\x4f\x50", &s_tRepeatByteEvent, &repeat_msg_handler},
@@ -96,14 +139,14 @@ bool console_task_init(void *pTarget)
                         {"\x1b\x5B\x36\x7E", NULL, NULL}};
     static check_msg_map_cfg_t s_tCheckMSGMapCFG;
     s_tCheckMSGMapCFG.chMSGNumber = UBOUND(c_tMSGMap);
-    s_tCheckMSGMapCFG.ptQueue = pTarget;
+    s_tCheckMSGMapCFG.ptQueue = ptCFG->ptReadByteEVent->pTarget;
     s_tCheckMSGMapCFG.ptMSGMap = c_tMSGMap;
     static check_msg_map_t s_tCheckMSGMap;
 
     const static check_agent_t c_tCheckWordsAgent[] = {{&s_tCheckMSGMap, &check_msg_map}};
     static check_use_peek_cfg_t s_tCheckWordsUsePeekCFG;
     s_tCheckWordsUsePeekCFG.chAgentsNumber = UBOUND(c_tCheckWordsAgent);
-    s_tCheckWordsUsePeekCFG.ptQueue = pTarget;
+    s_tCheckWordsUsePeekCFG.ptQueue = ptCFG->ptReadByteEVent->pTarget;
     s_tCheckWordsUsePeekCFG.ptAgents = (check_agent_t *)c_tCheckWordsAgent;
     s_tCheckWordsUsePeekCFG.fnOnDropByte = &console_frontend_input;
 
@@ -111,17 +154,18 @@ bool console_task_init(void *pTarget)
     CHECK_USE_PEEK.Init(&s_tCheckWordsUsePeek, &s_tCheckWordsUsePeekCFG);
 }
 
-void console_task(console_frontend_t *ptThis)
+void console_task(console_t *ptThis)
 {
     CHECK_USE_PEEK.CheckUsePeek(&s_tCheckWordsUsePeek);
-    console_frontend(ptThis);
+    console_frontend(this.ptConsoleFrontend);
 }
 
-bool console_frontend_init(console_frontend_t *ptThis,console_frontend_cfg_t *ptCFG)
+bool console_frontend_init(console_frontend_t *ptObj,console_frontend_cfg_t *ptCFG)
 {
     enum { 
         START 
     };
+    class_internal(ptObj, ptThis, console_frontend_t);
     if (       (NULL == ptThis) 
             || (NULL == ptCFG) 
             || (NULL == ptCFG->pchCurrentBuffer) 
@@ -355,7 +399,7 @@ fsm_rt_t console_frontend(console_frontend_t *ptThis)
 }
 
 #if VSF_USE_FUNCTION_KEY
-fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *chLastMaxNumber)
+fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCounter, uint8_t *pchLastMaxNumber)
 {
     enum{
         START,
@@ -382,7 +426,7 @@ fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCoun
             }
             // break;
         case IS_BEYOND_F1:
-            if (this.chLastCounter >= *chLastMaxNumber) {
+            if (this.chLastCounter >= *pchLastMaxNumber) {
                 TASK_CONSOLE_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -417,7 +461,7 @@ fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCoun
         GOTO_IS_BEYOND_F3:
             do {
                 uint8_t *pchLastTemp, *pchTemp;
-                if (this.chLastCounter >= *chLastMaxNumber) {
+                if (this.chLastCounter >= *pchLastMaxNumber) {
                     *chCurrentCounter = this.chLastCounter;
                     TASK_CONSOLE_RESET_FSM();
                     return fsm_rt_cpl;
