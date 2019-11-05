@@ -90,12 +90,12 @@ static uint8_t *find_token(uint8_t *pchBuffer, uint16_t *hwTokens);
 static void repeat_msg_handler(msg_t *ptMsg);
 static bool console_frontend_input(uint8_t chByte);
 
-bool console_task_init(console_t *ptThis, console_cfg_t *ptCFG)
+bool console_task_init(console_t *ptObj, console_cfg_t *ptCFG)
 {
     enum {
         START
     };
-    class_internal(pTarget, ptThis, console_t);
+    class_internal(ptObj, ptThis, console_t);
     if ((NULL == ptCFG) || (NULL == ptThis)) {
         return false;
     }
@@ -154,8 +154,9 @@ bool console_task_init(console_t *ptThis, console_cfg_t *ptCFG)
     CHECK_USE_PEEK.Init(&s_tCheckWordsUsePeek, &s_tCheckWordsUsePeekCFG);
 }
 
-void console_task(console_t *ptThis)
+void console_task(console_t *ptObj)
 {
+    class_internal(ptObj, ptThis, console_t);
     CHECK_USE_PEEK.CheckUsePeek(&s_tCheckWordsUsePeek);
     console_frontend(this.ptConsoleFrontend);
 }
@@ -202,7 +203,7 @@ bool console_frontend_init(console_frontend_t *ptObj,console_frontend_cfg_t *ptC
     return true;
 }
 
-fsm_rt_t console_frontend(console_frontend_t *ptThis)
+fsm_rt_t console_frontend(console_frontend_t *ptObj)
 {
     enum {
         START,
@@ -222,6 +223,7 @@ fsm_rt_t console_frontend(console_frontend_t *ptThis)
         PRINT_ENTER,
         USER_HANDLER
     };
+    class_internal(ptObj, ptThis, console_frontend_t);
     uint8_t *pchTemp;
     if (NULL == ptThis) {
         return fsm_rt_err;
@@ -491,13 +493,14 @@ fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurrentCoun
 }
 #endif
 
-fsm_rt_t console_token(console_token_t *ptThis, uint8_t*pchBuffer)
+fsm_rt_t console_token(console_token_t *ptObj, uint8_t*pchBuffer)
 {
     enum { 
         START, 
         FIND_TOKEN, 
         USER_HANDLER 
     };
+    class_internal(ptObj, ptThis, console_token_t);
     switch (this.chState) {
         case START:
             this.hwTokens = 0;
@@ -614,7 +617,7 @@ bool console_cmd_init(command_line_parsing_t* ptThis, command_line_parsing_cfg_t
     return true;
 }
 
-fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens)
+fsm_rt_t command_line_parsing(command_line_parsing_t *ptObj, uint8_t *pchBuffer, uint16_t hwTokens)
 {
     enum {
         START,
@@ -629,6 +632,7 @@ fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pchBuffer
         PRINT_HELP_INFO,
         CMD_HANDLER
     };
+    class_internal(ptObj, ptThis, command_line_parsing_t);
     if ((NULL == ptThis) || (NULL == pchBuffer)) {
         return fsm_rt_err;
     }

@@ -155,12 +155,12 @@ struct console_cfg_t {
     command_line_parsing_cfg_t *ptCmdParsingCFG;
 };
 
-extern bool console_task_init(console_t *ptThis, console_cfg_t *ptCFG);
-extern fsm_rt_t console_frontend(console_frontend_t *ptThis);
-extern fsm_rt_t console_token(console_token_t *ptThis, uint8_t *pchBuffer);
-extern fsm_rt_t command_line_parsing(command_line_parsing_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens); 
-extern fsm_rt_t test(cmd_test_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens);
-extern void console_task(console_t *ptThis);
+extern bool console_task_init(console_t *ptObj, console_cfg_t *ptCFG);
+extern fsm_rt_t console_frontend(console_frontend_t *ptObj);
+extern fsm_rt_t console_token(console_token_t *ptObj, uint8_t *pchBuffer);
+extern fsm_rt_t command_line_parsing(command_line_parsing_t *ptObj, uint8_t *pchBuffer, uint16_t hwTokens); 
+extern fsm_rt_t test(cmd_test_t *ptObj, uint8_t *pchBuffer, uint16_t hwTokens);
+extern void console_task(console_t *ptObj);
 
 
 #endif
