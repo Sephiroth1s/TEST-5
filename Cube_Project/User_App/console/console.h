@@ -1,11 +1,11 @@
 #include "app_cfg.h"
 #ifndef __CONSOLE_H__
 #define __CONSOLE_H__
+
 #include "../print_string/print_string.h"
 #include "../check_string/check_string.h"
 #include "../event/event.h"
 #include "../../Vsf/release/kernel/beta/vsf/utilities/3rd-party/PLOOC/plooc.h"
-#include "../../Vsf/release/kernel/beta/vsf/utilities/3rd-party/PLOOC/plooc_class.h"
 
 #define __PLOOC_CLASS_USE_STRICT_TEMPLATE__
    
@@ -14,6 +14,8 @@
 #elif   defined(__CONSOLE_CLASS_INHERIT)
 #       define __PLOOC_CLASS_INHERIT
 #endif
+
+#include "../../Vsf/release/kernel/beta/vsf/utilities/3rd-party/PLOOC/plooc_class.h"
 
 declare_class(cmd_t);
 declare_class(cmd_test_t);

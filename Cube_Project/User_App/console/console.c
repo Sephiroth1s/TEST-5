@@ -6,6 +6,7 @@
 #include "../msg_map/msg_map.h"
 #include "../event/event.h"
 #include <string.h>
+// #define __CONSOLE_CLASS_IMPLEMENT
 
 #define CONSOLE_SEPERATORS " ;,-/"
 #define CURSOR_RIGHT "\033[C"        // 光标右移 1 行
@@ -66,8 +67,8 @@ static cmd_test_t s_tCmdTest1;
 static cmd_test_t s_tCmdTest2;
 static cmd_test_t s_tCmdTest3;
 
-static fsm_rt_t print_all_help_info(pring_all_help_info_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens);
-static fsm_rt_t clear_screen(clear_screen_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens);
+static fsm_rt_t print_all_help_info(pring_all_help_info_t *ptObj, uint8_t *pchBuffer, uint16_t hwTokens);
+static fsm_rt_t clear_screen(clear_screen_t *ptObj, uint8_t *pchBuffer, uint16_t hwTokens);
 
 static cmd_t s_tDefaultCmd[]={
                 {&s_tPrintAllHelpInfo,"help","    help-Get command list of all available commands\r\n",&print_all_help_info},
@@ -84,7 +85,7 @@ static fsm_rt_t function_key(function_key_evt_handler_t *ptThis, uint8_t *chCurr
 #endif
 
 static bool console_frontend_init(console_frontend_t *ptObj, console_frontend_cfg_t *ptCFG);
-static bool console_cmd_init(command_line_parsing_t* ptThis, command_line_parsing_cfg_t *ptCFG);
+static bool console_cmd_init(command_line_parsing_t* ptObj, command_line_parsing_cfg_t *ptCFG);
 static uint8_t *find_token(uint8_t *pchBuffer, uint16_t *hwTokens);
 
 static void repeat_msg_handler(msg_t *ptMsg);
@@ -578,11 +579,12 @@ uint8_t* find_token(uint8_t *pchBuffer, uint16_t *hwTokens)
     return pchBuffer;
 }
 
-bool console_cmd_init(command_line_parsing_t* ptThis, command_line_parsing_cfg_t *ptCFG)
+bool console_cmd_init(command_line_parsing_t* ptObj, command_line_parsing_cfg_t *ptCFG)
 {
     enum {
         START
     };
+    class_internal(ptObj, ptThis, command_line_parsing_t);
     if ((NULL == ptThis) || (NULL == ptCFG)) {
         return false;
     }
@@ -755,7 +757,7 @@ fsm_rt_t command_line_parsing(command_line_parsing_t *ptObj, uint8_t *pchBuffer,
     return fsm_rt_on_going;
 }
 
-fsm_rt_t print_all_help_info(pring_all_help_info_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens)
+fsm_rt_t print_all_help_info(pring_all_help_info_t *ptObj, uint8_t *pchBuffer, uint16_t hwTokens)
 {
     enum {
         START,
@@ -767,6 +769,7 @@ fsm_rt_t print_all_help_info(pring_all_help_info_t *ptThis, uint8_t *pchBuffer, 
         PRINT_USER_CMD_HELP_INFO,
         CHECK_USER_INFO_COMPLETE
     };
+    class_internal(ptObj, ptThis, pring_all_help_info_t);
     if (NULL == ptThis) {
         return fsm_rt_err;
     }
@@ -856,13 +859,14 @@ fsm_rt_t print_all_help_info(pring_all_help_info_t *ptThis, uint8_t *pchBuffer, 
     
 }
 
-fsm_rt_t clear_screen(clear_screen_t *ptThis, uint8_t *pchBuffer, uint16_t hwTokens)
+fsm_rt_t clear_screen(clear_screen_t *ptObj, uint8_t *pchBuffer, uint16_t hwTokens)
 {
      enum { 
         START,
         CLEAR_SCREEN_INIT,
         CLEAR_SCREEN
     };
+    class_internal(ptObj, ptThis, clear_screen_t);
     if (NULL == ptThis) {
         return fsm_rt_err;
     }
