@@ -1,4 +1,5 @@
 #include "app_cfg.h"
+#define __CONSOLE_CLASS_IMPLEMENT
 #include "./console.h"
 #include "../print_string/print_string.h"
 #include "../check_string/check_string.h"
@@ -6,7 +7,7 @@
 #include "../msg_map/msg_map.h"
 #include "../event/event.h"
 #include <string.h>
-// #define __CONSOLE_CLASS_IMPLEMENT
+
 
 #define CONSOLE_SEPERATORS " ;,-/"
 #define CURSOR_RIGHT "\033[C"        // 光标右移 1 行

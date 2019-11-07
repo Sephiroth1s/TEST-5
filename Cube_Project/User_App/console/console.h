@@ -25,6 +25,7 @@ declare_class(console_token_t);
 declare_class(function_key_evt_handler_t);
 declare_class(token_parsing_evt_handler_t);
 declare_class(console_token_evt_handler_t);
+declare_class(console_t);
 typedef fsm_rt_t cmd_handler_t(void *, uint8_t *, uint16_t);
 typedef fsm_rt_t token_parsing_handler_t(void *, uint8_t *, uint16_t);
 
@@ -143,10 +144,13 @@ typedef struct {
     void *pOutputTarget;
 } console_frontend_cfg_t;
 
-typedef struct console_t console_t;
-struct console_t {
-    console_frontend_t *ptConsoleFrontend;
-};
+
+def_class(console_t,
+    private_member(
+        console_frontend_t *ptConsoleFrontend;
+    )    
+)
+end_def_class(console_t)
 
 typedef struct console_cfg_t console_cfg_t;
 struct console_cfg_t {
