@@ -30,8 +30,8 @@
 #endif
 #endif
 
-typedef struct pring_all_help_info_t pring_all_help_info_t;  //  help 命令
-struct pring_all_help_info_t {
+typedef struct print_all_help_info_t print_all_help_info_t;  //  help 命令
+struct print_all_help_info_t {
     uint8_t chState;
     void *pTarget;
     uint8_t chDefaultCounter;
@@ -62,13 +62,13 @@ static uint8_t s_chLastBuffer[CONSOLE_BUFFER_SIZE+1] = {'\0'};
 static event_t s_tRepeatLineEvent,s_tRepeatByteEvent;
 static function_key_evt_handler_t s_tFunctionKey;
 #endif
-static pring_all_help_info_t s_tPrintAllHelpInfo;
+static print_all_help_info_t s_tPrintAllHelpInfo;
 static clear_screen_t s_tClearScreen;
 static cmd_test_t s_tCmdTest1;
 static cmd_test_t s_tCmdTest2;
 static cmd_test_t s_tCmdTest3;
 
-static fsm_rt_t print_all_help_info(pring_all_help_info_t *ptObj, uint8_t *pchBuffer, uint16_t hwTokens);
+static fsm_rt_t print_all_help_info(print_all_help_info_t *ptObj, uint8_t *pchBuffer, uint16_t hwTokens);
 static fsm_rt_t clear_screen(clear_screen_t *ptObj, uint8_t *pchBuffer, uint16_t hwTokens);
 
 static cmd_t s_tDefaultCmd[]={
@@ -758,11 +758,11 @@ fsm_rt_t command_line_parsing(command_line_parsing_t *ptObj, uint8_t *pchBuffer,
     return fsm_rt_on_going;
 }
 
-fsm_rt_t print_all_help_info(pring_all_help_info_t *ptObj, uint8_t *pchBuffer, uint16_t hwTokens)
+fsm_rt_t print_all_help_info(print_all_help_info_t *ptObj, uint8_t *pchBuffer, uint16_t hwTokens)
 {
     enum {
         START,
-        PRING_DEFAULT_HELP_INFO_INIT,
+        PRINT_DEFAULT_HELP_INFO_INIT,
         PRITN_DEFAULT_HELP_INFO,
         CHECK_DEFAUTL_INFO_COMPLETE,
         CHECK_USER_CMD,
@@ -770,7 +770,7 @@ fsm_rt_t print_all_help_info(pring_all_help_info_t *ptObj, uint8_t *pchBuffer, u
         PRINT_USER_CMD_HELP_INFO,
         CHECK_USER_INFO_COMPLETE
     };
-    class_internal(ptObj, ptThis, pring_all_help_info_t);
+    class_internal(ptObj, ptThis, print_all_help_info_t);
     if (NULL == ptThis) {
         return fsm_rt_err;
     }
@@ -780,17 +780,17 @@ fsm_rt_t print_all_help_info(pring_all_help_info_t *ptObj, uint8_t *pchBuffer, u
     switch (this.chState) {
         case START:
             this.chDefaultCounter = 0;
-            this.chState = PRING_DEFAULT_HELP_INFO_INIT;
+            this.chState = PRINT_DEFAULT_HELP_INFO_INIT;
             // break;
         case CHECK_DEFAUTL_INFO_COMPLETE:
             if (this.chDefaultCounter < this.chCmdDefaultNumber) {
-                this.chState = PRING_DEFAULT_HELP_INFO_INIT;
+                this.chState = PRINT_DEFAULT_HELP_INFO_INIT;
             } else{
                 this.chState = CHECK_USER_CMD;
                 goto GOTO_CHECK_USER_CMD;
             }
             // break;
-        case PRING_DEFAULT_HELP_INFO_INIT:
+        case PRINT_DEFAULT_HELP_INFO_INIT:
             this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
             if (this.ptPrintStr == NULL) {
                 break;
