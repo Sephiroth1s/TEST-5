@@ -68,7 +68,7 @@ fsm_rt_t wait_raising_edge(void)
         case CHECK_HIGH:
             if (s_chCnt >= KEY_THRESHOLD) {
                 uint8_t chByte = KEY_UP;
-                ENQUEUE_BYTE(this.ptQueue,chByte);
+                //ENQUEUE_BYTE(this.ptQueue,chByte);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
             } else {
@@ -110,7 +110,7 @@ fsm_rt_t wait_falling_edge(void)
         case CHECK_HIGH:
             if (s_chCnt >= KEY_THRESHOLD) {
                 uint8_t chByte = KEY_DOWN;
-                ENQUEUE_BYTE(this.ptQueue,chByte);
+                //ENQUEUE_BYTE(this.ptQueue,chByte);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
             } else {
@@ -131,10 +131,10 @@ bool key_service_init(key_service_t *ptThis)
 key_t key_service_get_key(key_service_t *ptThis)
 {
     uint8_t chByte;
-    if(DEQUEUE_BYTE(this.ptQueue,&chByte)){
-        this.tKeyState.tEvent = chByte;
-        return this.tKeyState;
-    }
+//    if(DEQUEUE_BYTE(this.ptQueue,&chByte)){
+//        this.tKeyState.tEvent = chByte;
+//        return this.tKeyState;
+//    }
     
 }
 fsm_rt_t key_service_task(key_service_t *ptThis)

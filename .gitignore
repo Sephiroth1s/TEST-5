@@ -79,4 +79,4 @@ RTE_Components.h
 !msg_map.lib
 !check_use_peek.lib
 !vsf_stdio_lib.a
-
+vsf/

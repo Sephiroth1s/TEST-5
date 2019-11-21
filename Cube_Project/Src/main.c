@@ -58,10 +58,10 @@ int main(void)
 		key_init();
     while (1) {
         // breath_led();
-        if(IS_KEY1_DOWN())
-        {
-            LED1_ON();
-        }
+//        if(IS_KEY1_DOWN())
+//        {
+//            LED1_ON();
+//        }
 //        serial_in_task();
 //        serial_out_task();
     }
