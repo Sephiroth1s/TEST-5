@@ -32,6 +32,7 @@ extern "C" {
 #include "../User_App/system_clock_cfg.h"
 #include "../User_App/gpio_init.h"
 #include "../User_App/led/led.h"
+#include "../User_App/key/key.h"
 #include "../User_App/uart/uart.h"
 #include "../User_App/event/event.h"
 #include "../User_App/critical_sector/critical_sector.h"
