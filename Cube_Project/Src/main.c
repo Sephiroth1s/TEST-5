@@ -19,7 +19,7 @@
 #define ENTER "\x0A\x0D"
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
-
+#define KEY_FIFO_SIZE 96
 
 extern POOL(print_str) s_tPrintFreeList;
 
@@ -48,9 +48,10 @@ static void system_init(void)
 int main(void)
 {
     enum { START };
+    static key_t s_tKeyFIFO[KEY_FIFO_SIZE];
     static key_queue_t s_tQueue;
-    static wait_raising_edge_t s_tRaisingEdge = {START, &s_tQueue};
-    static wait_falling_edge_t s_tFallingEdge = {START, &s_tQueue};
+    static wait_raising_edge_t s_tRaisingEdge;
+    static wait_falling_edge_t s_tFallingEdge;
     const static key_service_cfg_t c_tKeyCFG = {&s_tFIFOout, &s_tQueue};
     static key_service_t s_tKeyService;
     system_init();
@@ -59,7 +60,8 @@ int main(void)
     POOL_ADD_HEAP(print_str, &s_tPrintFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
-    INIT_KEY_QUEUE(&s_tQueue, 20);
+    KEY_SERVICE.WaitKey.Init(&s_tRaisingEdge, &s_tFallingEdge, &s_tQueue);
+    KEY_SERVICE.KeyQueue.Init(&s_tQueue, s_tKeyFIFO, UBOUND(s_tKeyFIFO));
     KEY_SERVICE.Init(&s_tKeyService, &c_tKeyCFG);
     LED1_OFF();
     key_init();
