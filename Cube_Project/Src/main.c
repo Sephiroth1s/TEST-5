@@ -21,7 +21,7 @@
 #define OUTPUT_FIFO_SIZE 100
 
 
-POOL(print_str) s_tPrintFreeList;
+extern POOL(print_str) s_tPrintFreeList;
 
 static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE];
 static byte_queue_t s_tFIFOin, s_tFIFOout;
@@ -48,22 +48,28 @@ static void system_init(void)
 int main(void)
 {
     enum { START };
-		system_init();
-		led_init();
-//    POOL_INIT(print_str, &s_tPrintFreeList);
-//    POOL_ADD_HEAP(print_str, &s_tPrintFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
-//    INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
-//    INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
+    static key_queue_t s_tQueue;
+    static wait_raising_edge_t s_tRaisingEdge = {START, &s_tQueue};
+    static wait_falling_edge_t s_tFallingEdge = {START, &s_tQueue};
+    const static key_service_cfg_t c_tKeyCFG = {&s_tFIFOout, &s_tQueue};
+    static key_service_t s_tKeyService;
+    system_init();
+    led_init();
+    POOL_INIT(print_str, &s_tPrintFreeList);
+    POOL_ADD_HEAP(print_str, &s_tPrintFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
+    INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
+    INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
+    INIT_KEY_QUEUE(&s_tQueue, 20);
+    KEY_SERVICE.Init(&s_tKeyService, &c_tKeyCFG);
     LED1_OFF();
-		key_init();
+    key_init();
     while (1) {
-        // breath_led();
-//        if(IS_KEY1_DOWN())
-//        {
-//            LED1_ON();
-//        }
-//        serial_in_task();
-//        serial_out_task();
+        breath_led();
+        KEY_SERVICE.WaitKey.Falling(&s_tFallingEdge);
+        KEY_SERVICE.WaitKey.Raising(&s_tRaisingEdge);
+        KEY_SERVICE.Task(&s_tKeyService);
+        serial_in_task();
+        serial_out_task();
     }
 }
 

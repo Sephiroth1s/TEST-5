@@ -18,7 +18,7 @@ typedef struct {
     uint16_t hwTail;
     uint16_t hwPeek;
     uint16_t hwLength;
-    uint16_t hwPeekLength;
+    uint16_t hwPeekLength;                                                          
 } byte_queue_t;
 
 extern bool enqueue_byte(byte_queue_t* ptThis, uint8_t pchByte);

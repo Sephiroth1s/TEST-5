@@ -5,6 +5,7 @@
 
 /*============================ INCLUDES ======================================*/
 #include "stm32f1xx_hal.h"
+#include "../print_string/print_string.h"
 #include "../../Vsf/release/kernel/beta/vsf/utilities/3rd-party/PLOOC/plooc.h"
 /*============================ MACROS ========================================*/
 #define __PLOOC_CLASS_USE_STRICT_TEMPLATE__
@@ -16,7 +17,15 @@
 #endif   
 #include "../../Vsf/release/kernel/beta/vsf/utilities/3rd-party/PLOOC/plooc_class.h"
 /*============================ MACROFIED FUNCTIONS ===========================*/
+#define ENQUEUE_KEY(__QUEUE, __OBJ) (enqueue_key(__QUEUE, __OBJ))
+#define DEQUEUE_KEY(__QUEUE, __ADDR) (dequeue_key(__QUEUE, __ADDR))
+#define INIT_KEY_QUEUE(__QUEUE, __SIZE)                        \
+    do {                                                       \
+        static key_t s_tBuffer[(__SIZE)];                      \
+        init_key_queue(__QUEUE, s_tBuffer, sizeof(s_tBuffer)); \
+    } while (0)
 /*============================ TYPES =========================================*/
+
 typedef enum {
     KEY_NULL = 0,
     KEY_DOWN,
@@ -25,22 +34,54 @@ typedef enum {
 typedef struct key_t {
     key_evt_t tEvent;
 } key_t;
+
+ declare_class(key_queue_t)
+ def_class(key_queue_t,
+     private_member(
+         key_t* ptBuffer;
+         uint16_t hwSize;
+         uint16_t hwHead;
+         uint16_t hwTail;
+         uint16_t hwLength;
+     )
+ )
+end_def_class(key_queue_t)
+
+typedef struct {
+    uint8_t chState;
+    key_queue_t* ptQueue;
+    uint8_t chCnt;
+} wait_raising_edge_t;
+
+typedef struct {
+    uint8_t chState;
+    key_queue_t* ptQueue;
+    uint8_t chCnt;
+} wait_falling_edge_t;
+
 declare_class(key_service_t)
 def_class(key_service_t,
     private_member(
         uint8_t chState;
-        key_t *ptKeyEvent;
+        void *pOutputTarget;
+        print_str_t *ptPrintStr;
+        key_queue_t *ptQueue;
+        key_t tKeyEvent;
     )
 )
 end_def_class(key_service_t)
+typedef struct {
+    void *pOutputTarget;
+    key_queue_t *ptQueue;
+}key_service_cfg_t;
 
 def_interface(i_key_service_t)
-    bool     (*Init)    (key_service_t *ptThis);
-    key_t    (*GetKey)  (key_service_t *ptThis);
-    fsm_rt_t (*Task)    (key_service_t *ptThis);
+    bool     (*Init)    (key_service_t *ptObj, key_service_cfg_t *ptCFG);
+    key_t    (*GetKey)  (key_service_t *ptObj);
+    fsm_rt_t (*Task)    (key_service_t *ptObj);
     struct{
-        fsm_rt_t (*Raising) (void);
-        fsm_rt_t (*Falling) (void);
+        fsm_rt_t (*Raising) (wait_raising_edge_t *ptObj);
+        fsm_rt_t (*Falling) (wait_falling_edge_t *ptObj);
     }WaitKey;
 end_def_interface(i_key_service_t)
 /*============================ GLOBAL VARIABLES ==============================*/
@@ -49,11 +90,9 @@ extern const i_key_service_t KEY_SERVICE;
 /*============================ PROTOTYPES ====================================*/
 
 extern void key_init(void);
-extern fsm_rt_t wait_raising_edge(void);
-extern fsm_rt_t wait_falling_edge(void);
-extern bool key_service_init(key_service_t *ptThis);
-extern key_t key_service_get_key(key_service_t *ptThis);
-extern fsm_rt_t key_service_task(key_service_t *ptThis);
+extern bool enqueue_key(key_queue_t* ptObj, key_t tKeyEvent);
+extern bool dequeue_key(key_queue_t* ptObj, key_t* ptKeyEvent);
+extern bool init_key_queue(key_queue_t* ptObj, key_t* ptKeyEvent, uint16_t hwSize);
 #endif
 /* EOF */
 
