@@ -2,7 +2,7 @@
 #include "vsf.h"
 #include "main.h"
 #include <stdio.h>
-
+//#include "plooc.h"
 #define TASK_RESET_FSM()  \
     do {                  \
         s_tState = START; \
@@ -20,7 +20,14 @@
 #define INPUT_FIFO_SIZE 30
 #define OUTPUT_FIFO_SIZE 100
 #define KEY_FIFO_SIZE 96
-
+declare_class(print_key_t)
+def_class(print_key_t,
+    uint8_t chState;
+    print_str_t *ptPrint;
+    key_t tKeyEvent;
+)
+end_def_class(print_key_t)
+    
 extern POOL(print_str) s_tPrintFreeList;
 
 static uint8_t s_chBytein[INPUT_FIFO_SIZE], s_chByteout[OUTPUT_FIFO_SIZE];
@@ -60,21 +67,90 @@ int main(void)
     POOL_ADD_HEAP(print_str, &s_tPrintFreeList, s_chPrintStrPool, UBOUND(s_chPrintStrPool));
     INIT_BYTE_QUEUE(&s_tFIFOin, s_chBytein, sizeof(s_chBytein));
     INIT_BYTE_QUEUE(&s_tFIFOout, s_chByteout, sizeof(s_chByteout));
-    KEY_SERVICE.WaitKey.Init(&s_tRaisingEdge, &s_tFallingEdge, &s_tQueue);
-    KEY_SERVICE.KeyQueue.Init(&s_tQueue, s_tKeyFIFO, UBOUND(s_tKeyFIFO));
+
     KEY_SERVICE.Init(&s_tKeyService, &c_tKeyCFG);
     LED1_OFF();
     key_init();
     while (1) {
         breath_led();
-        KEY_SERVICE.WaitKey.Falling(&s_tFallingEdge);
-        KEY_SERVICE.WaitKey.Raising(&s_tRaisingEdge);
         KEY_SERVICE.Task(&s_tKeyService);
         serial_in_task();
         serial_out_task();
     }
 }
-
+fsm_rt_t print_key(print_key_t *ptObj)
+{
+    class_internal(ptObj, ptThis, print_key_t);
+    enum {
+        START,
+        GET_KEY,
+        INIT_PRINT_KEY_UP,
+        PRINT_KEY_UP,
+        INIT_PRINT_KEY_DOWN,
+        PRINT_KEY_DOWN,
+    };
+    if (NULL == ptObj) {
+        return fsm_rt_err;
+    }
+    switch (this.chState) {
+        case START:
+            this.chState = GET_KEY;
+            // break;
+        case GET_KEY:
+            KEY_SERVICE.GetKey(&s_tKeyService, &this.tKeyEvent);
+            if (KEY_UP == this.tKeyEvent.tEvent) {
+                this.chState = INIT_PRINT_KEY_UP;
+                goto GOTO_INIT_PRINT_KEY_UP;
+            }
+            if (KEY_DOWN == this.tKeyEvent.tEvent) {
+                this.chState = INIT_PRINT_KEY_DOWN;
+                goto GOTO_INIT_PRINT_KEY_DOWN;
+            }
+            break;
+        case INIT_PRINT_KEY_UP:
+        GOTO_INIT_PRINT_KEY_UP:
+            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
+            if (NULL == this.ptPrintStr) {
+                break;
+            }
+            do {
+                const print_str_cfg_t c_tCFG = {"KEY1 UP\r\n", NULL};
+                PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
+            } while (0);
+            this.chState = PRINT_KEY_UP;
+            // break;
+        case PRINT_KEY_UP:
+            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
+                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
+                TASK_RESET_FSM();
+                return fsm_rt_cpl;
+            }
+            break;
+        case INIT_PRINT_KEY_DOWN:
+        GOTO_INIT_PRINT_KEY_DOWN:
+            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
+            if (NULL == this.ptPrintStr) {
+                break;
+            }
+            do {
+                const print_str_cfg_t c_tCFG = {"KEY1 DOWN\r\n", NULL};
+                PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
+            } while (0);
+            this.chState = PRINT_KEY_DOWN;
+            // break;
+        case PRINT_KEY_DOWN:
+            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
+                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
+                TASK_RESET_FSM();
+                return fsm_rt_cpl;
+            }
+            break;
+        default:
+            return fsm_rt_err;
+            break;
+    }
+    return fsm_rt_on_going;
+}
 fsm_rt_t serial_in_task(void)
 {
     static enum {
@@ -133,7 +209,7 @@ fsm_rt_t serial_out_task(void)
 
 bool print_str_output_byte(void *ptThis, uint8_t pchByte)
 {
-    if (ENQUEUE_BYTE(ptThis, pchByte)) {
+    if (ENQUEUE_BYTE(&s_tFIFOout, pchByte)) {
         return true;
     }
     return false;

@@ -56,10 +56,6 @@ fsm_rt_t print_string(print_str_t *ptObj)
         PRINT_STR
     };
     ASSERT(NULL != ptObj);
-    
-    if (NULL == this.pTarget) {
-        return fsm_rt_err;
-    }
     switch (this.chState) {
         case START:
             this.chState = PRINT_CHECK;

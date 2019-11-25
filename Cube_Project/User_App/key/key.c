@@ -14,41 +14,43 @@
 #else
     #define KEY_THRESHOLD 40
 #endif
+
 /*============================ MACROFIED FUNCTIONS ===========================*/
 #define ENQUEUE_KEY(__QUEUE, __OBJ) (enqueue_key(__QUEUE, __OBJ))
 #define DEQUEUE_KEY(__QUEUE, __ADDR) (dequeue_key(__QUEUE, __ADDR))
 #define IS_KEY_QUEUE_EMPTY(__QUEUE) (is_key_queue_empty(__QUEUE))
-#define IS_KEY1_DOWN()  (GPIO_PIN_RESET == HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_5))
-#define IS_KEY1_UP()    (GPIO_PIN_SET == HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_5))
-#define IS_KEY2_DOWN()  //todo
-#define IS_KEY2_UP()    //todo
+#ifndef IS_KEY1_DOWN()
+#error No defined macro IS_KEY1_DOWN() for key pressed
+#endif
+#ifndef IS_KEY1_UP()
+#error No defined macro IS_KEY1_UP()  for key raised
+#endif
 /*============================ TYPES =========================================*/
 /*============================ GLOBAL VARIABLES ==============================*/
 POOL(print_str) s_tPrintFreeList;
 /*============================ LOCAL VARIABLES ===============================*/
+static key_queue_t *s_ptQueue = NULL;
 /*============================ PROTOTYPES ====================================*/
 static bool init_key_queue(key_queue_t *ptObj, key_t *ptKeyEvent, uint16_t hwSize);
 static bool is_key_queue_empty(key_queue_t *ptObj);
 static bool is_key_queue_full(key_queue_t *ptObj);
 static bool enqueue_key(key_queue_t *ptObj, key_t tKeyEvent);
 static bool dequeue_key(key_queue_t *ptObj, key_t *ptKeyEvent);
-static bool check_edge_init(wait_raising_edge_t *ptRaiseObj, wait_falling_edge_t *ptFallObj, key_queue_t *ptQueue);
+
+
+
+static bool wait_raising_edge_init(wait_raising_edge_t *ptObj);
+static bool wait_fallling_edge_init(wait_falling_edge_t *ptObj);
 static fsm_rt_t wait_raising_edge(wait_raising_edge_t *ptObj);
 static fsm_rt_t wait_falling_edge(wait_falling_edge_t *ptObj);
-static bool key_service_init(key_service_t *ptObj, key_service_cfg_t *ptCFG);
-static key_t key_service_get_key(key_service_t *ptObj);
-static fsm_rt_t key_service_task(key_service_t *ptObj);
+static bool key_service_init(key_service__t *ptThis);
+static bool key_service_get_key(key_service_t *ptThis ,key_t *ptKey);
+static fsm_rt_t key_service_task(key_service_t *ptThis);
 
 const i_key_service_t KEY_SERVICE = {
     .Init = &key_service_init,
     .GetKey = &key_service_get_key,
     .Task = &key_service_task,
-    .KeyQueue.Init = &init_key_queue,
-    .KeyQueue.Enqueue = &enqueue_key,
-    .KeyQueue.Dequeue = &dequeue_key,
-    .WaitKey.Init = &check_edge_init,
-    .WaitKey.Raising = &wait_raising_edge,
-    .WaitKey.Falling = &wait_falling_edge,
 };
 
 void key_init(void)
@@ -64,20 +66,55 @@ void key_init(void)
     GPIO_InitStruct.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
-bool check_edge_init(wait_raising_edge_t *ptRaiseObj,wait_falling_edge_t *ptFallObj,key_queue_t *ptQueue)
+
+bool wait_raising_edge_init(wait_raising_edge_t *ptObj)
 {
+    class_internal(ptObj, ptThis, wait_raising_edge_t);
     enum {
         START
     };
-    if((NULL==ptRaiseObj)||(NULL==ptFallObj)){
+    if (NULL==ptObj){
         return false;
     }
-    ptFallObj->chState = START;
-    ptFallObj->ptQueue = ptQueue;
-    ptRaiseObj->chState = START;
-    ptRaiseObj->ptQueue = ptQueue;
+    this.chState = START;
+    this.ptQueue = s_ptQueue;
+    this.tHighCheck.chState = START;
+    this.tLowCheck.chState = START;
     return true;
 }
+
+bool wait_fallling_edge_init(wait_falling_edge_t *ptObj)
+{
+    class_internal(ptObj, ptThis, wait_falling_edge_t);
+    enum {
+        START
+    };
+    if (NULL==ptObj){
+        return false;
+    }
+    this.chState = START;
+    this.ptQueue = s_ptQueue;
+    this.tHighCheck.chState = START;
+    this.tLowCheck.chState = START;
+    return true;
+}
+bool key_service_init(key_service_t *ptObj)
+{
+    class_internal(ptObj, ptThis, key_service_t);
+    enum {
+        START
+    };
+    if (NULL == ptObj) {
+        return false;
+    }
+    this.chState = START;
+    s_ptQueue = this.tQueue;
+    #error "队列未初始化"
+    wait_raising_edge_init(&this.tWaitRaiseEdge);
+    wait_fallling_edge_init(&this.tWaitFallEdge);
+    return true;
+}
+
 #define TASK_RESET_FSM()  do{ this.chState = START; } while(0)
 fsm_rt_t high_check(high_check_t *ptThis)
 {
@@ -188,8 +225,6 @@ fsm_rt_t wait_raising_edge(wait_raising_edge_t *ptObj)
             // break;
         case CHECK_HIGH:
             if (fsm_rt_cpl == high_check(&this.tHighCheck)) {
-                key_t tKeyEvent = {.tEvent = KEY_UP};
-                ENQUEUE_KEY(this.ptQueue, tKeyEvent);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -211,8 +246,6 @@ fsm_rt_t wait_falling_edge(wait_falling_edge_t *ptObj)
     };
     switch (this.chState) {
         case START:
-            this.tLowCheck.chState = START;
-            this.tHighCheck.chState = START;
             this.chState = CHECK_HIGH;
             // break;
         case CHECK_HIGH:
@@ -223,8 +256,6 @@ fsm_rt_t wait_falling_edge(wait_falling_edge_t *ptObj)
             // break;
         case CHECK_LOW:
             if (fsm_rt_cpl == low_check(&this.tLowCheck)) {
-                key_t tKeyEvent = {.tEvent = KEY_DOWN};
-                ENQUEUE_KEY(this.ptQueue, tKeyEvent);
                 TASK_RESET_FSM();
                 return fsm_rt_cpl;
             }
@@ -236,106 +267,63 @@ fsm_rt_t wait_falling_edge(wait_falling_edge_t *ptObj)
     return fsm_rt_on_going;
 }
 
-bool key_service_init(key_service_t *ptObj, key_service_cfg_t *ptCFG)
+bool key_service_get_key(key_service_t *ptObj ,key_t *ptKey)
 {
-    class_internal(ptObj, ptThis, key_service_t);
-    enum {
-        START
-    };
-    if (NULL == ptObj) {
-        return false;
-    }
-    this.chState = START;
-    this.pOutputTarget = ptCFG->pOutputTarget;
-    this.ptQueue = ptCFG->ptQueue;
-    return true;
+    do {
+        class_internal(ptObj, ptThis, key_service_t);
+        if ((NULL == ptObj) || (NULL == ptKey)) {
+            break;
+        }
+        if (DEQUEUE_KEY(this.tQueue, ptKey)) {
+            return true;
+        }
+    } while (0);
+    return false;
 }
-key_t key_service_get_key(key_service_t *ptObj)
-{
-    class_internal(ptObj, ptThis, key_service_t);
-    if(NULL==ptObj){
-        this.tKeyEvent.tEvent = KEY_NULL;
-        return this.tKeyEvent;
-    }
-    if (DEQUEUE_KEY(this.ptQueue, &this.tKeyEvent)) {
-        return this.tKeyEvent;
-    }
-    this.tKeyEvent.tEvent = KEY_NULL;
-    return this.tKeyEvent;
-}
-
 fsm_rt_t key_service_task(key_service_t *ptObj)
 {
     class_internal(ptObj, ptThis, key_service_t);
     enum {
         START,
-        GET_KEY,
-        INIT_PRINT_KEY_UP,
-        PRINT_KEY_UP,
-        INIT_PRINT_KEY_DOWN,
-        PRINT_KEY_DOWN,
+        WAIT_RAISING,
+        WAIT_FALLING,
+        USER_FUNCTION
     };
     if (NULL == ptObj) {
         return fsm_rt_err;
     }
-    switch (this.chState) {
-        case START:
-            this.chState = GET_KEY;
-            // break;
-        case GET_KEY:
-            KEY_SERVICE.GetKey(ptThis);
-            if (KEY_UP == this.tKeyEvent.tEvent) {
-                this.chState = INIT_PRINT_KEY_UP;
-                goto GOTO_INIT_PRINT_KEY_UP;
-            }
-            if (KEY_DOWN == this.tKeyEvent.tEvent) {
-                this.chState = INIT_PRINT_KEY_DOWN;
-                goto GOTO_INIT_PRINT_KEY_DOWN;
-            }
-            break;
-        case INIT_PRINT_KEY_UP:
-        GOTO_INIT_PRINT_KEY_UP:
-            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
-            if (NULL == this.ptPrintStr) {
-                break;
-            }
-            do {
-                const print_str_cfg_t c_tCFG = {"KEY1 UP\r\n",
-                                                this.pOutputTarget};
-                PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
-            } while (0);
-            this.chState = PRINT_KEY_UP;
-            // break;
-        case PRINT_KEY_UP:
-            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
-                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-                TASK_RESET_FSM();
-                return fsm_rt_cpl;
-            }
-            break;
-        case INIT_PRINT_KEY_DOWN:
-        GOTO_INIT_PRINT_KEY_DOWN:
-            this.ptPrintStr = POOL_ALLOCATE(print_str, &s_tPrintFreeList);
-            if (NULL == this.ptPrintStr) {
-                break;
-            }
-            do {
-                const print_str_cfg_t c_tCFG = {"KEY1 DOWN\r\n",
-                                                this.pOutputTarget};
-                PRINT_STRING.Init(this.ptPrintStr, &c_tCFG);
-            } while (0);
-            this.chState = PRINT_KEY_DOWN;
-            // break;
-        case PRINT_KEY_DOWN:
-            if (fsm_rt_cpl == PRINT_STRING.Print(this.ptPrintStr)) {
-                POOL_FREE(print_str, &s_tPrintFreeList, this.ptPrintStr);
-                TASK_RESET_FSM();
-                return fsm_rt_cpl;
-            }
-            break;
-        default:
-            return fsm_rt_err;
-            break;
+    switch (this.chState)
+    {
+    case START:
+        this.chState = WAIT_RAISING;
+        // break;
+    case WAIT_RAISING:
+        if(fsm_rt_cpl==wait_raising_edge(&this.tWaitRaiseEdge)){
+            key_t tKeyEvent = {.tEvent = KEY_UP};
+            ENQUEUE_KEY(this.ptQueue, tKeyEvent);
+            this.chState = USER_FUNCTION;
+            goto GOTO_USER_FUNCTION;
+        }
+        // break;
+    case WAIT_FALLING:
+        if(fsm_rt_cpl==wait_falling_edge(&this.tWaitFallEdge)){
+            key_t tKeyEvent = {.tEvent = KEY_DOWN};
+            ENQUEUE_KEY(this.ptQueue, tKeyEvent);
+            this.chState = USER_FUNCTION;
+            goto GOTO_USER_FUNCTION;
+        }
+        this.chState = WAIT_RAISING;
+        break;
+    case USER_FUNCTION:
+    GOTO_USER_FUNCTION:
+        if(fsm_rt_cpl==this.fnKeyHandler(this.pTarget)){
+            TASK_RESET_FSM();
+            return fsm_rt_cpl;
+        }
+        break;
+    default:
+        return fsm_rt_err;
+        break;
     }
     return fsm_rt_on_going;
 }
