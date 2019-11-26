@@ -39,7 +39,7 @@ typedef struct key_t {
      )
  )
 end_def_class(key_queue_t)
-typedef fsm_rt_t key_user_handler_t(void*);
+
 typedef struct {
     uint8_t chState;
     uint8_t chCnt;
@@ -54,6 +54,7 @@ declare_class(wait_raising_edge_t)
 def_class(wait_raising_edge_t,
     private_member (
         uint8_t chState;
+        key_queue_t *ptQueue;
         high_check_t tHighCheck;
         low_check_t tLowCheck;
     )
@@ -64,6 +65,7 @@ declare_class(wait_falling_edge_t)
 def_class(wait_falling_edge_t,
     private_member (
         uint8_t chState;
+        key_queue_t *ptQueue;
         high_check_t tHighCheck;
         low_check_t tLowCheck;
     )
@@ -75,16 +77,12 @@ def_class(key_service_t,
     private_member(
         uint8_t chState;
         key_t tKeyEvent;
-        key_queue_t tQueue;
+        key_queue_t *ptQueue;
         wait_falling_edge_t tWaitFallEdge;
         wait_raising_edge_t tWaitRaiseEdge;
     )
 )
 end_def_class(key_service_t)
-
-typedef struct {
-    key_queue_t *ptQueue;
-}key_service_cfg_t;
 
 def_interface(i_key_service_t)
     bool     (*Init)    (key_service_t *ptObj);

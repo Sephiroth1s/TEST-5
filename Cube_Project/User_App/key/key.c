@@ -9,11 +9,6 @@
 #ifndef this
     #define this (*ptThis)
 #endif
-#if VSF_USE_KEY_FILTER
-    #define KEY_THRESHOLD 30
-#else
-    #define KEY_THRESHOLD 40
-#endif
 
 /*============================ MACROFIED FUNCTIONS ===========================*/
 #define ENQUEUE_KEY(__QUEUE, __OBJ) (enqueue_key(__QUEUE, __OBJ))
@@ -29,7 +24,8 @@
 /*============================ GLOBAL VARIABLES ==============================*/
 POOL(print_str) s_tPrintFreeList;
 /*============================ LOCAL VARIABLES ===============================*/
-static key_queue_t *s_ptQueue = NULL;
+static key_t s_tKeyFIFO[KEY_FIFO_SIZE];
+static key_queue_t s_tQueue;
 /*============================ PROTOTYPES ====================================*/
 static bool init_key_queue(key_queue_t *ptObj, key_t *ptKeyEvent, uint16_t hwSize);
 static bool is_key_queue_empty(key_queue_t *ptObj);
@@ -37,13 +33,11 @@ static bool is_key_queue_full(key_queue_t *ptObj);
 static bool enqueue_key(key_queue_t *ptObj, key_t tKeyEvent);
 static bool dequeue_key(key_queue_t *ptObj, key_t *ptKeyEvent);
 
-
-
 static bool wait_raising_edge_init(wait_raising_edge_t *ptObj);
 static bool wait_fallling_edge_init(wait_falling_edge_t *ptObj);
 static fsm_rt_t wait_raising_edge(wait_raising_edge_t *ptObj);
 static fsm_rt_t wait_falling_edge(wait_falling_edge_t *ptObj);
-static bool key_service_init(key_service__t *ptThis);
+static bool key_service_init(key_service_t *ptObj);
 static bool key_service_get_key(key_service_t *ptThis ,key_t *ptKey);
 static fsm_rt_t key_service_task(key_service_t *ptThis);
 
@@ -77,7 +71,7 @@ bool wait_raising_edge_init(wait_raising_edge_t *ptObj)
         return false;
     }
     this.chState = START;
-    this.ptQueue = s_ptQueue;
+    this.ptQueue = &s_tQueue;
     this.tHighCheck.chState = START;
     this.tLowCheck.chState = START;
     return true;
@@ -93,7 +87,7 @@ bool wait_fallling_edge_init(wait_falling_edge_t *ptObj)
         return false;
     }
     this.chState = START;
-    this.ptQueue = s_ptQueue;
+    this.ptQueue = &s_tQueue;
     this.tHighCheck.chState = START;
     this.tLowCheck.chState = START;
     return true;
@@ -108,8 +102,8 @@ bool key_service_init(key_service_t *ptObj)
         return false;
     }
     this.chState = START;
-    s_ptQueue = this.tQueue;
-    #error "队列未初始化"
+    this.ptQueue = &s_tQueue;
+    init_key_queue(this.ptQueue, s_tKeyFIFO, sizeof(s_tKeyFIFO));
     wait_raising_edge_init(&this.tWaitRaiseEdge);
     wait_fallling_edge_init(&this.tWaitFallEdge);
     return true;
@@ -274,7 +268,7 @@ bool key_service_get_key(key_service_t *ptObj ,key_t *ptKey)
         if ((NULL == ptObj) || (NULL == ptKey)) {
             break;
         }
-        if (DEQUEUE_KEY(this.tQueue, ptKey)) {
+        if (DEQUEUE_KEY(this.ptQueue, ptKey)) {
             return true;
         }
     } while (0);
@@ -294,36 +288,30 @@ fsm_rt_t key_service_task(key_service_t *ptObj)
     }
     switch (this.chState)
     {
-    case START:
-        this.chState = WAIT_RAISING;
-        // break;
-    case WAIT_RAISING:
-        if(fsm_rt_cpl==wait_raising_edge(&this.tWaitRaiseEdge)){
-            key_t tKeyEvent = {.tEvent = KEY_UP};
-            ENQUEUE_KEY(this.ptQueue, tKeyEvent);
-            this.chState = USER_FUNCTION;
-            goto GOTO_USER_FUNCTION;
-        }
-        // break;
-    case WAIT_FALLING:
-        if(fsm_rt_cpl==wait_falling_edge(&this.tWaitFallEdge)){
-            key_t tKeyEvent = {.tEvent = KEY_DOWN};
-            ENQUEUE_KEY(this.ptQueue, tKeyEvent);
-            this.chState = USER_FUNCTION;
-            goto GOTO_USER_FUNCTION;
-        }
-        this.chState = WAIT_RAISING;
-        break;
-    case USER_FUNCTION:
-    GOTO_USER_FUNCTION:
-        if(fsm_rt_cpl==this.fnKeyHandler(this.pTarget)){
-            TASK_RESET_FSM();
-            return fsm_rt_cpl;
-        }
-        break;
-    default:
-        return fsm_rt_err;
-        break;
+        case START:
+            this.chState = WAIT_RAISING;
+            // break;
+        case WAIT_RAISING:
+            if (fsm_rt_cpl == wait_raising_edge(&this.tWaitRaiseEdge)) {
+                key_t tKeyEvent = {.tEvent = KEY_UP};
+                ENQUEUE_KEY(this.ptQueue, tKeyEvent);
+                TASK_RESET_FSM();
+                return fsm_rt_cpl;
+            }
+            this.chState = WAIT_FALLING;
+            // break;
+        case WAIT_FALLING:
+            if (fsm_rt_cpl == wait_falling_edge(&this.tWaitFallEdge)) {
+                key_t tKeyEvent = {.tEvent = KEY_DOWN};
+                ENQUEUE_KEY(this.ptQueue, tKeyEvent);
+                TASK_RESET_FSM();
+                return fsm_rt_cpl;
+            }
+            this.chState = WAIT_RAISING;
+            break;
+        default:
+            return fsm_rt_err;
+            break;
     }
     return fsm_rt_on_going;
 }
@@ -331,7 +319,7 @@ fsm_rt_t key_service_task(key_service_t *ptObj)
 bool enqueue_key(key_queue_t* ptObj, key_t tKeyEvent)
 {
     class_internal(ptObj, ptThis, key_queue_t);
-    if ((ptObj == NULL) || (is_key_queue_full(ptObj)||(this.ptBuffer==NULL))) {
+    if ((ptObj == NULL) || (is_key_queue_full(ptObj) || (this.ptBuffer==NULL))) {
         return false;
     }
     this.ptBuffer[this.hwTail] = tKeyEvent;
